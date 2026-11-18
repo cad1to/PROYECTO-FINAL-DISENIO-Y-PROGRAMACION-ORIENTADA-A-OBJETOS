@@ -18,3 +18,4 @@ Universidad Veracruzana, campus Coatzacoalcos
 - **RF-12:** El sistema debe registrar los consumos de servicios dentro de la reservación activa, calculando el costo de cada uno según su tipo (**polimorfismo** en `calcularCosto()`).
 - **RF-13:** El sistema debe generar la factura de una reservación sumando noches (con `calcularTarifa()` según el tipo de habitación), consumos y el `IMPUESTO`, aplicando `DESCUENTO_VIP` si el huésped es VIP. El check-out requiere la factura pagada.
 - **RF-14:** El sistema debe calcular la nómina recorriendo todos los empleados activos y obteniendo el sueldo de cada rol con `calcularSueldo()` (**polimorfismo** sobre `List<Empleado>`).
+
