@@ -1,0 +1,267 @@
+classDiagram
+direction TB
+
+namespace modelo_personas {
+    class Persona {
+        <<abstract>>
+        #String id
+        #String nombre
+        #String apellido
+        #String telefono
+        #String correo
+        +getNombreCompleto() String
+        +descripcion()* String
+    }
+    class Huesped {
+        +double DESCUENTO_VIP$
+        #TipoHuesped tipo
+        #String nacionalidad
+        #boolean activo
+        +calcularDescuento() double
+        +darDeBaja() void
+        +descripcion() String
+    }
+    class Empleado {
+        <<abstract>>
+        #double salarioBase
+        #LocalDate fechaIngreso
+        #boolean activo
+        +calcularSueldo()* double
+        +darDeBaja() void
+        +descripcion() String
+    }
+    class Recepcionista {
+        #String turno
+        +hacerCheckIn(r Reservacion) void
+        +hacerCheckOut(r Reservacion) void
+        +calcularSueldo() double
+    }
+    class Camarista {
+        #int habitacionesLimpiadas
+        +calcularSueldo() double
+    }
+    class Gerente {
+        #double bonoMensual
+        +calcularSueldo() double
+    }
+    class Mesero {
+        #double propinasAcumuladas
+        +calcularSueldo() double
+    }
+    class TipoHuesped {
+        <<enumeration>>
+        REGULAR
+        VIP
+    }
+}
+
+namespace modelo_alojamiento {
+    class Habitacion {
+        <<abstract>>
+        +double CARGO_PERSONA_EXTRA$
+        #int numero
+        #int piso
+        #int capacidad
+        #double tarifaBase
+        #EstadoHabitacion estado
+        #boolean activo
+        +calcularTarifa(noches int)* double
+        +calcularCosto(noches int) double
+        +getConcepto() String
+        +cambiarEstado(e EstadoHabitacion) void
+        +darDeBaja() void
+    }
+    class HabitacionSencilla {
+        +calcularTarifa(noches int) double
+    }
+    class HabitacionDoble {
+        #int numCamas
+        +calcularTarifa(noches int) double
+    }
+    class Suite {
+        #double cargoExtra
+        #boolean tieneJacuzzi
+        +calcularTarifa(noches int) double
+    }
+    class EstadoHabitacion {
+        <<enumeration>>
+        DISPONIBLE
+        OCUPADA
+        LIMPIEZA
+        MANTENIMIENTO
+    }
+}
+
+namespace modelo_reservas {
+    class Reservacion {
+        +int HORAS_MINIMAS_CANCELACION$
+        +double CARGO_CANCELACION$
+        #String id
+        #LocalDate fechaEntrada
+        #LocalDate fechaSalida
+        #int numHuespedes
+        #EstadoReservacion estado
+        +calcularNoches() int
+        +seTraslapaCon(otra Reservacion) boolean
+        +agregarConsumo(s Servicio, cantidad int) void
+        +cancelar() void
+    }
+    class ConsumoServicio {
+        #int cantidad
+        #LocalDate fecha
+        +calcularSubtotal() double
+    }
+    class EstadoReservacion {
+        <<enumeration>>
+        ACTIVA
+        CANCELADA
+        FINALIZADA
+    }
+}
+
+namespace modelo_extras {
+    class Servicio {
+        <<abstract>>
+        #String codigo
+        #String nombre
+        #double precioBase
+        #CategoriaServicio categoria
+        #boolean activo
+        +calcularCosto(cantidad int)* double
+        +getConcepto() String
+        +darDeBaja() void
+    }
+    class ServicioRestaurante {
+        +calcularCosto(cantidad int) double
+    }
+    class ServicioSpa {
+        +int MINUTOS_BASE$
+        +calcularCosto(minutos int) double
+    }
+    class ServicioLavanderia {
+        +double RECARGO_EXPRES$
+        #boolean expres
+        +calcularCosto(prendas int) double
+    }
+    class CategoriaServicio {
+        <<enumeration>>
+        RESTAURANTE
+        SPA
+        LAVANDERIA
+    }
+}
+
+namespace modelo_facturacion {
+    class Facturable {
+        <<interface>>
+        +getConcepto() String
+        +calcularCosto(cantidad int) double
+    }
+    class Factura {
+        +double IMPUESTO$
+        #String folio
+        #LocalDate fechaEmision
+        #boolean pagada
+        +agregarDetalle(f Facturable, cantidad int) void
+        +calcularTotal() double
+        +pagar() void
+    }
+    class DetalleFactura {
+        #String concepto
+        #double monto
+        +getMonto() double
+    }
+}
+
+namespace servicio {
+    class Hotel {
+        #String nombre
+        #String direccion
+        #List~Habitacion~ habitaciones
+        #List~Empleado~ empleados
+        #List~Huesped~ huespedes
+        #List~Servicio~ servicios
+        #List~Reservacion~ reservaciones
+        +registrarHuesped(h Huesped) void
+        +registrarEmpleado(e Empleado) void
+        +registrarHabitacion(h Habitacion) void
+        +registrarServicio(s Servicio) void
+        +crearReservacion(h, hab, ini, fin, n) Reservacion
+        +buscarDisponibles(ini, fin) List~Habitacion~
+        +generarFactura(r Reservacion) Factura
+        +calcularNomina() double
+    }
+}
+
+namespace interfaz {
+    class MenuConsola {
+        #Hotel hotel
+        #Scanner entrada
+        +iniciar() void
+        #mostrarMenu() void
+        #leerOpcion() int
+    }
+}
+
+namespace excepciones {
+    class HotelException {
+        +HotelException(mensaje String)
+    }
+    class ReservacionInvalidaException {
+        +ReservacionInvalidaException(mensaje String)
+    }
+    class BajaNoPermitidaException {
+        +BajaNoPermitidaException(mensaje String)
+    }
+    class PagoPendienteException {
+        +PagoPendienteException(mensaje String)
+    }
+}
+
+%% ===== Herencia =====
+Persona <|-- Huesped
+Persona <|-- Empleado
+Empleado <|-- Recepcionista
+Empleado <|-- Camarista
+Empleado <|-- Gerente
+Empleado <|-- Mesero
+Habitacion <|-- HabitacionSencilla
+Habitacion <|-- HabitacionDoble
+Habitacion <|-- Suite
+Servicio <|-- ServicioRestaurante
+Servicio <|-- ServicioSpa
+Servicio <|-- ServicioLavanderia
+HotelException <|-- ReservacionInvalidaException
+HotelException <|-- BajaNoPermitidaException
+HotelException <|-- PagoPendienteException
+
+%% ===== Implementacion de interfaz =====
+Facturable <|.. Habitacion
+Facturable <|.. Servicio
+
+%% ===== Agregacion (Hotel) =====
+Hotel "1" o-- "1..*" Habitacion
+Hotel "1" o-- "0..*" Empleado
+Hotel "1" o-- "0..*" Huesped
+Hotel "1" o-- "0..*" Servicio
+
+%% ===== Asociaciones =====
+Hotel "1" --> "0..*" Reservacion : gestiona
+Reservacion "0..*" --> "1" Huesped : realiza
+Reservacion "0..*" --> "1" Habitacion : reserva
+ConsumoServicio "0..*" --> "1" Servicio : consume
+Reservacion "1" -- "0..1" Factura : se factura en
+
+%% ===== Composicion =====
+Reservacion "1" *-- "0..*" ConsumoServicio
+Factura "1" *-- "1..*" DetalleFactura
+
+%% ===== Dependencias =====
+Recepcionista ..> Reservacion : usa
+Factura ..> Facturable : usa
+MenuConsola ..> Hotel : usa
+Hotel ..> HotelException : lanza
+Huesped ..> TipoHuesped
+Habitacion ..> EstadoHabitacion
+Reservacion ..> EstadoReservacion
+Servicio ..> CategoriaServicio
