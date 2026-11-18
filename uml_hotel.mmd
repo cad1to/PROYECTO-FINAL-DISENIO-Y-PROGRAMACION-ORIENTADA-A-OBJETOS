@@ -101,7 +101,9 @@ namespace modelo_reservas {
         #LocalDate fechaSalida
         #int numHuespedes
         #EstadoReservacion estado
+        #List~Habitacion~ habitaciones
         +calcularNoches() int
+        +calcularCapacidadTotal() int
         +seTraslapaCon(otra Reservacion) boolean
         +agregarConsumo(s Servicio, cantidad int) void
         +cancelar() void
@@ -186,7 +188,7 @@ namespace servicio {
         +registrarEmpleado(e Empleado) void
         +registrarHabitacion(h Habitacion) void
         +registrarServicio(s Servicio) void
-        +crearReservacion(h, hab, ini, fin, n) Reservacion
+        +crearReservacion(h, habs, ini, fin, n) Reservacion
         +buscarDisponibles(ini, fin) List~Habitacion~
         +generarFactura(r Reservacion) Factura
         +calcularNomina() double
@@ -248,7 +250,7 @@ Hotel "1" o-- "0..*" Servicio
 %% ===== Asociaciones =====
 Hotel "1" --> "0..*" Reservacion : gestiona
 Reservacion "0..*" --> "1" Huesped : realiza
-Reservacion "0..*" --> "1" Habitacion : reserva
+Reservacion "0..*" --> "1..*" Habitacion : reserva
 ConsumoServicio "0..*" --> "1" Servicio : consume
 Reservacion "1" -- "0..1" Factura : se factura en
 
