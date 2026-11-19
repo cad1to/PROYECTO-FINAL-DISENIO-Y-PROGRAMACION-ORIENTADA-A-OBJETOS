@@ -3,7 +3,7 @@
 Proyecto Final, EE. Diseño y Programación Orientada a Objetos
 Universidad Veracruzana, campus Coatzacoalcos
 
-Esta lista corresponde al diagrama `uml_hotel_v3.mmd`. En el diagrama y en el código se omiten los getters y setters triviales. Las decisiones D-11 y D-12 están en `Reglas_negocio.md` (sección 9).
+Esta lista corresponde al diagrama `uml_hotel.mmd`. En el diagrama y en el código se omiten los getters y setters triviales. Las decisiones D-11 y D-12 están en `Reglas_negocio.md` (sección 9).
 
 ## Packages
 
