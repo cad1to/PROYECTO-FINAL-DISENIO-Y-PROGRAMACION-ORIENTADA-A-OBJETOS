@@ -5,6 +5,8 @@ Universidad Veracruzana, campus Coatzacoalcos
 
 Las reglas de negocio describen cómo opera realmente un hotel y son la base de los requisitos funcionales (RF). Cada regla indica el RF donde se aplica.
 
+Estados de una reservación: ACTIVA (confirmada, sin check-in), EN_CURSO (con check-in realizado), FINALIZADA (con check-out realizado) y CANCELADA.
+
 ## 1. Reservaciones
 
 | ID | Regla | RF |
@@ -15,9 +17,9 @@ Las reglas de negocio describen cómo opera realmente un hotel y son la base de 
 | RN-04 | Todas las habitaciones de una reservación comparten la misma fecha de entrada y de salida. | RF-05 |
 | RN-05 | El número de huéspedes de una reservación no puede superar la capacidad total de sus habitaciones. | RF-05 |
 | RN-06 | La fecha de salida debe ser posterior a la fecha de entrada (mínimo una noche). | RF-05, RF-07 |
-| RN-07 | Al modificar las fechas de una reservación se vuelven a validar las fechas. | RF-07 |
-| RN-08 | Una reservación se puede cancelar mientras esté en estado ACTIVA. Una reservación FINALIZADA no se puede cancelar. | RF-10 |
-| RN-09 | Si la cancelación se hace con menos de `HORAS_MINIMAS_CANCELACION` de anticipación, se cobra `CARGO_CANCELACION`. | RF-10 |
+| RN-07 | Solo se pueden modificar las fechas de una reservación ACTIVA y, al hacerlo, se vuelven a validar disponibilidad, traslapes y fechas. | RF-07 |
+| RN-08 | Una reservación solo se puede cancelar mientras esté ACTIVA (sin check-in). Una reservación EN_CURSO, FINALIZADA o CANCELADA no se puede cancelar. | RF-10 |
+| RN-09 | Si la cancelación se hace con menos de `HORAS_MINIMAS_CANCELACION` de anticipación, se cobra `CARGO_CANCELACION`, que queda registrado en la reservación. | RF-10 |
 | RN-10 | La cancelación aplica a la reservación completa y el cargo por cancelación se cobra una sola vez. | RF-10 |
 
 ## 2. Habitaciones y su estado
@@ -26,16 +28,16 @@ Las reglas de negocio describen cómo opera realmente un hotel y son la base de 
 |---|---|---|
 | RN-11 | El número de habitación es único dentro del hotel. | RF-03 |
 | RN-12 | El estado de una habitación es uno de: DISPONIBLE, OCUPADA, LIMPIEZA o MANTENIMIENTO. | RF-07 |
-| RN-13 | Al hacer check-in, todas las habitaciones de la reservación pasan a OCUPADA. Al hacer check-out, pasan a LIMPIEZA. | RF-11 |
+| RN-13 | El check-in solo puede hacerse sobre una reservación ACTIVA: la reservación pasa a EN_CURSO y todas sus habitaciones a OCUPADA. El check-out solo puede hacerse sobre una reservación EN_CURSO: la reservación pasa a FINALIZADA y sus habitaciones a LIMPIEZA. | RF-11 |
 | RN-14 | Una habitación en MANTENIMIENTO no puede ofrecerse en la búsqueda de disponibilidad. | RF-06 |
-| RN-15 | No se puede dar de baja una habitación que tenga reservaciones activas. | RF-09 |
+| RN-15 | No se puede dar de baja una habitación que tenga reservaciones activas (en estado ACTIVA o EN_CURSO). | RF-09 |
 
 ## 3. Tarifas y costos
 
 | ID | Regla | RF |
 |---|---|---|
 | RN-16 | La tarifa de hospedaje depende del tipo de habitación: la sencilla usa la tarifa base por noche. | RF-13 |
-| RN-17 | La habitación doble suma `CARGO_PERSONA_EXTRA` por cada persona adicional sobre la ocupación base. | RF-13 |
+| RN-17 | La habitación doble cobra la tarifa base por noche y suma `CARGO_CAMA_EXTRA` por noche por cada cama adicional a la primera (`numCamas - 1`). | RF-13 |
 | RN-18 | La suite suma un cargo extra fijo por noche a la tarifa base. | RF-13 |
 | RN-19 | El costo de un servicio depende de su tipo: el restaurante cobra por platillo. | RF-12 |
 | RN-20 | El spa cobra según la duración en minutos, tomando `MINUTOS_BASE` como referencia del precio base. | RF-12 |
@@ -45,12 +47,12 @@ Las reglas de negocio describen cómo opera realmente un hotel y son la base de 
 
 | ID | Regla | RF |
 |---|---|---|
-| RN-22 | Los consumos de servicios solo pueden registrarse dentro de una reservación activa. | RF-12 |
+| RN-22 | Los consumos de servicios solo pueden registrarse dentro de una reservación EN_CURSO. | RF-12 |
 | RN-23 | Un consumo no existe fuera de su reservación: si la reservación desaparece, sus consumos también. | RF-12 |
 | RN-24 | La factura suma el hospedaje de cada habitación (noches por tarifa), los consumos y el `IMPUESTO`. | RF-13 |
 | RN-25 | Cada concepto de la factura (habitación y servicios) es un `Facturable` y genera un `DetalleFactura`. | RF-13 |
 | RN-26 | Los huéspedes de tipo VIP reciben `DESCUENTO_VIP` en su factura. | RF-13 |
-| RN-27 | El check-out solo puede realizarse si la factura de la reservación está pagada. | RF-11, RF-13 |
+| RN-27 | El check-out de una reservación EN_CURSO solo puede realizarse si la factura de la reservación está pagada. | RF-11, RF-13 |
 
 ## 5. Personal y nómina
 

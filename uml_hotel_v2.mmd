@@ -9,25 +9,22 @@ namespace modelo_personas {
         #String apellido
         #String telefono
         #String correo
+        #boolean activo
         +getNombreCompleto() String
+        +darDeBaja() void
         +descripcion()* String
     }
     class Huesped {
         +double DESCUENTO_VIP$
         #TipoHuesped tipo
-        #String nacionalidad
-        #boolean activo
         +calcularDescuento() double
-        +darDeBaja() void
         +descripcion() String
     }
     class Empleado {
         <<abstract>>
         #double salarioBase
         #LocalDate fechaIngreso
-        #boolean activo
         +calcularSueldo()* double
-        +darDeBaja() void
         +descripcion() String
     }
     class Recepcionista {
@@ -58,7 +55,6 @@ namespace modelo_personas {
 namespace modelo_alojamiento {
     class Habitacion {
         <<abstract>>
-        +double CARGO_PERSONA_EXTRA$
         #int numero
         #int piso
         #int capacidad
@@ -75,6 +71,7 @@ namespace modelo_alojamiento {
         +calcularTarifa(noches int) double
     }
     class HabitacionDoble {
+        +double CARGO_CAMA_EXTRA$
         #int numCamas
         +calcularTarifa(noches int) double
     }
@@ -101,23 +98,30 @@ namespace modelo_reservas {
         #LocalDate fechaSalida
         #int numHuespedes
         #EstadoReservacion estado
+        #double cargoCancelacion
+        #Huesped huesped
         #List~Habitacion~ habitaciones
+        #List~ConsumoServicio~ consumos
+        #Factura factura
         +calcularNoches() int
         +calcularCapacidadTotal() int
         +seTraslapaCon(otra Reservacion) boolean
+        +modificarFechas(ini LocalDate, fin LocalDate) void
         +agregarConsumo(s Servicio, cantidad int) void
         +cancelar() void
     }
     class ConsumoServicio {
         #int cantidad
         #LocalDate fecha
+        #Servicio servicio
         +calcularSubtotal() double
     }
     class EstadoReservacion {
         <<enumeration>>
         ACTIVA
-        CANCELADA
+        EN_CURSO
         FINALIZADA
+        CANCELADA
     }
 }
 
@@ -163,7 +167,9 @@ namespace modelo_facturacion {
         +double IMPUESTO$
         #String folio
         #LocalDate fechaEmision
+        #double descuento
         #boolean pagada
+        #List~DetalleFactura~ detalles
         +agregarDetalle(f Facturable, cantidad int) void
         +calcularTotal() double
         +pagar() void
@@ -189,7 +195,18 @@ namespace servicio {
         +registrarHabitacion(h Habitacion) void
         +registrarServicio(s Servicio) void
         +crearReservacion(h, habs, ini, fin, n) Reservacion
+        +listarHuespedes() List~Huesped~
+        +listarEmpleados() List~Empleado~
+        +listarHabitaciones() List~Habitacion~
+        +listarServicios() List~Servicio~
         +buscarDisponibles(ini, fin) List~Habitacion~
+        +actualizarTipoHuesped(id String, t TipoHuesped) void
+        +actualizarEstadoHabitacion(num int, e EstadoHabitacion) void
+        +darDeBajaHuesped(id String) void
+        +darDeBajaEmpleado(id String) void
+        +darDeBajaHabitacion(num int) void
+        +darDeBajaServicio(codigo String) void
+        +cancelarReservacion(r Reservacion) void
         +generarFactura(r Reservacion) Factura
         +calcularNomina() double
     }
@@ -242,7 +259,7 @@ Facturable <|.. Habitacion
 Facturable <|.. Servicio
 
 %% ===== Agregacion (Hotel) =====
-Hotel "1" o-- "1..*" Habitacion
+Hotel "1" o-- "0..*" Habitacion
 Hotel "1" o-- "0..*" Empleado
 Hotel "1" o-- "0..*" Huesped
 Hotel "1" o-- "0..*" Servicio
@@ -252,7 +269,7 @@ Hotel "1" --> "0..*" Reservacion : gestiona
 Reservacion "0..*" --> "1" Huesped : realiza
 Reservacion "0..*" --> "1..*" Habitacion : reserva
 ConsumoServicio "0..*" --> "1" Servicio : consume
-Reservacion "1" -- "0..1" Factura : se factura en
+Reservacion "1" --> "0..1" Factura : se factura en
 
 %% ===== Composicion =====
 Reservacion "1" *-- "0..*" ConsumoServicio
