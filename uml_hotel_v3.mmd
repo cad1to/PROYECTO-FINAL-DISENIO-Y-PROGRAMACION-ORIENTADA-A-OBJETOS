@@ -1,6 +1,18 @@
 classDiagram
 direction TB
 
+%% Convenciones: se omiten getters y setters triviales.
+%% Los namespaces corresponden a los packages Java (modelo_personas = modelo.personas).
+%% Las decisiones D-xx estan en la seccion 9 de Reglas_negocio.md.
+
+namespace modelo_comun {
+    class Desactivable {
+        <<interface>>
+        +isActivo() boolean
+        +darDeBaja() void
+    }
+}
+
 namespace modelo_personas {
     class Persona {
         <<abstract>>
@@ -24,26 +36,32 @@ namespace modelo_personas {
         <<abstract>>
         #double salarioBase
         #LocalDate fechaIngreso
-        +calcularSueldo()* double
+        +getPuesto()* String
+        +calcularSueldo() double
+        +cerrarPeriodo() void
         +descripcion() String
     }
     class Recepcionista {
         #String turno
-        +hacerCheckIn(r Reservacion) void
-        +hacerCheckOut(r Reservacion) void
-        +calcularSueldo() double
+        +hacerCheckIn(r: Reservacion) void
+        +hacerCheckOut(r: Reservacion) void
+        +getPuesto() String
     }
     class Camarista {
-        #int habitacionesLimpiadas
-        +calcularSueldo() double
+        +registrarLimpieza(h: Habitacion) void
+        +getPuesto() String
     }
     class Gerente {
         #double bonoMensual
+        +getPuesto() String
         +calcularSueldo() double
     }
     class Mesero {
         #double propinasAcumuladas
+        +registrarPropina(monto: double) void
+        +getPuesto() String
         +calcularSueldo() double
+        +cerrarPeriodo() void
     }
     class TipoHuesped {
         <<enumeration>>
@@ -61,24 +79,23 @@ namespace modelo_alojamiento {
         #double tarifaBase
         #EstadoHabitacion estado
         #boolean activo
-        +calcularTarifa(noches int)* double
-        +calcularCosto(noches int) double
+        +calcularTarifa(noches: int)* double
+        +calcularCosto(noches: int) double
         +getConcepto() String
-        +cambiarEstado(e EstadoHabitacion) void
+        +cambiarEstado(e: EstadoHabitacion) void
         +darDeBaja() void
     }
     class HabitacionSencilla {
-        +calcularTarifa(noches int) double
+        +calcularTarifa(noches: int) double
     }
     class HabitacionDoble {
         +double CARGO_CAMA_EXTRA$
         #int numCamas
-        +calcularTarifa(noches int) double
+        +calcularTarifa(noches: int) double
     }
     class Suite {
         #double cargoExtra
-        #boolean tieneJacuzzi
-        +calcularTarifa(noches int) double
+        +calcularTarifa(noches: int) double
     }
     class EstadoHabitacion {
         <<enumeration>>
@@ -93,6 +110,7 @@ namespace modelo_reservas {
     class Reservacion {
         +int HORAS_MINIMAS_CANCELACION$
         +double CARGO_CANCELACION$
+        +LocalTime HORA_CHECK_IN$
         #String id
         #LocalDate fechaEntrada
         #LocalDate fechaSalida
@@ -105,10 +123,12 @@ namespace modelo_reservas {
         #Factura factura
         +calcularNoches() int
         +calcularCapacidadTotal() int
-        +seTraslapaCon(otra Reservacion) boolean
-        +modificarFechas(ini LocalDate, fin LocalDate) void
-        +agregarConsumo(s Servicio, cantidad int) void
-        +cancelar() void
+        +seTraslapaCon(ini: LocalDate, fin: LocalDate) boolean
+        +modificarFechas(ini: LocalDate, fin: LocalDate) void
+        +agregarConsumo(s: Servicio, cantidad: int) void
+        +iniciar() void
+        +finalizar() void
+        +cancelar(ahora: LocalDateTime) void
     }
     class ConsumoServicio {
         #int cantidad
@@ -125,7 +145,7 @@ namespace modelo_reservas {
     }
 }
 
-namespace modelo_extras {
+namespace modelo_catalogo {
     class Servicio {
         <<abstract>>
         #String codigo
@@ -133,21 +153,20 @@ namespace modelo_extras {
         #double precioBase
         #CategoriaServicio categoria
         #boolean activo
-        +calcularCosto(cantidad int)* double
+        +calcularCosto(cantidad: int)* double
         +getConcepto() String
         +darDeBaja() void
     }
     class ServicioRestaurante {
-        +calcularCosto(cantidad int) double
+        +calcularCosto(platillos: int) double
     }
     class ServicioSpa {
-        +int MINUTOS_BASE$
-        +calcularCosto(minutos int) double
+        +calcularCosto(sesiones: int) double
     }
     class ServicioLavanderia {
         +double RECARGO_EXPRES$
         #boolean expres
-        +calcularCosto(prendas int) double
+        +calcularCosto(prendas: int) double
     }
     class CategoriaServicio {
         <<enumeration>>
@@ -161,7 +180,7 @@ namespace modelo_facturacion {
     class Facturable {
         <<interface>>
         +getConcepto() String
-        +calcularCosto(cantidad int) double
+        +calcularCosto(cantidad: int) double
     }
     class Factura {
         +double IMPUESTO$
@@ -170,14 +189,15 @@ namespace modelo_facturacion {
         #double descuento
         #boolean pagada
         #List~DetalleFactura~ detalles
-        +agregarDetalle(f Facturable, cantidad int) void
+        +agregarDetalle(f: Facturable, cantidad: int) void
+        +calcularSubtotal() double
         +calcularTotal() double
         +pagar() void
     }
     class DetalleFactura {
         #String concepto
+        #int cantidad
         #double monto
-        +getMonto() double
     }
 }
 
@@ -190,25 +210,37 @@ namespace servicio {
         #List~Huesped~ huespedes
         #List~Servicio~ servicios
         #List~Reservacion~ reservaciones
-        +registrarHuesped(h Huesped) void
-        +registrarEmpleado(e Empleado) void
-        +registrarHabitacion(h Habitacion) void
-        +registrarServicio(s Servicio) void
-        +crearReservacion(h, habs, ini, fin, n) Reservacion
+        +registrarHuesped(h: Huesped) void
+        +registrarEmpleado(e: Empleado) void
+        +registrarHabitacion(h: Habitacion) void
+        +registrarServicio(s: Servicio) void
+        +crearReservacion(idHuesped: String, numerosHab: List~Integer~, ini: LocalDate, fin: LocalDate, numHuespedes: int) Reservacion
         +listarHuespedes() List~Huesped~
         +listarEmpleados() List~Empleado~
         +listarHabitaciones() List~Habitacion~
         +listarServicios() List~Servicio~
-        +buscarDisponibles(ini, fin) List~Habitacion~
-        +actualizarTipoHuesped(id String, t TipoHuesped) void
-        +actualizarEstadoHabitacion(num int, e EstadoHabitacion) void
-        +darDeBajaHuesped(id String) void
-        +darDeBajaEmpleado(id String) void
-        +darDeBajaHabitacion(num int) void
-        +darDeBajaServicio(codigo String) void
-        +cancelarReservacion(r Reservacion) void
-        +generarFactura(r Reservacion) Factura
+        +listarReservaciones() List~Reservacion~
+        +buscarDisponibles(ini: LocalDate, fin: LocalDate) List~Habitacion~
+        +actualizarTipoHuesped(id: String, t: TipoHuesped) void
+        +actualizarSalarioEmpleado(id: String, salario: double) void
+        +actualizarEstadoHabitacion(num: int, e: EstadoHabitacion) void
+        +actualizarTarifaHabitacion(num: int, tarifa: double) void
+        +actualizarPrecioServicio(codigo: String, precio: double) void
+        +modificarFechasReservacion(idRes: String, ini: LocalDate, fin: LocalDate) void
+        +darDeBajaHuesped(id: String) void
+        +darDeBajaEmpleado(id: String) void
+        +darDeBajaHabitacion(num: int) void
+        +darDeBajaServicio(codigo: String) void
+        +cancelarReservacion(idRes: String, ahora: LocalDateTime) void
+        +realizarCheckIn(idRecepcionista: String, idRes: String) void
+        +realizarCheckOut(idRecepcionista: String, idRes: String) void
+        +registrarConsumo(idRes: String, codigoServicio: String, cantidad: int) void
+        +generarFactura(idRes: String) Factura
+        +pagarFactura(idRes: String) void
+        +registrarLimpieza(idCamarista: String, numHabitacion: int) void
+        +registrarPropina(idMesero: String, monto: double) void
         +calcularNomina() double
+        +cerrarPeriodoNomina() double
     }
 }
 
@@ -220,20 +252,29 @@ namespace interfaz {
         #mostrarMenu() void
         #leerOpcion() int
     }
+    class Main {
+        +main(args: String[])$ void
+    }
 }
 
 namespace excepciones {
     class HotelException {
-        +HotelException(mensaje String)
+        +HotelException(mensaje: String)
+    }
+    class RegistroDuplicadoException {
+        +RegistroDuplicadoException(mensaje: String)
+    }
+    class RegistroNoEncontradoException {
+        +RegistroNoEncontradoException(mensaje: String)
     }
     class ReservacionInvalidaException {
-        +ReservacionInvalidaException(mensaje String)
+        +ReservacionInvalidaException(mensaje: String)
     }
     class BajaNoPermitidaException {
-        +BajaNoPermitidaException(mensaje String)
+        +BajaNoPermitidaException(mensaje: String)
     }
     class PagoPendienteException {
-        +PagoPendienteException(mensaje String)
+        +PagoPendienteException(mensaje: String)
     }
 }
 
@@ -250,6 +291,8 @@ Habitacion <|-- Suite
 Servicio <|-- ServicioRestaurante
 Servicio <|-- ServicioSpa
 Servicio <|-- ServicioLavanderia
+HotelException <|-- RegistroDuplicadoException
+HotelException <|-- RegistroNoEncontradoException
 HotelException <|-- ReservacionInvalidaException
 HotelException <|-- BajaNoPermitidaException
 HotelException <|-- PagoPendienteException
@@ -257,6 +300,9 @@ HotelException <|-- PagoPendienteException
 %% ===== Implementacion de interfaz =====
 Facturable <|.. Habitacion
 Facturable <|.. Servicio
+Desactivable <|.. Persona
+Desactivable <|.. Habitacion
+Desactivable <|.. Servicio
 
 %% ===== Agregacion (Hotel) =====
 Hotel "1" o-- "0..*" Habitacion
@@ -276,10 +322,17 @@ Reservacion "1" *-- "0..*" ConsumoServicio
 Factura "1" *-- "1..*" DetalleFactura
 
 %% ===== Dependencias =====
-Recepcionista ..> Reservacion : usa
+Recepcionista ..> Reservacion : opera
+Camarista ..> Habitacion : limpia
 Factura ..> Facturable : usa
-MenuConsola ..> Hotel : usa
+Hotel ..> Factura : crea
+Hotel ..> Recepcionista : delega check-in/out
+Hotel ..> Camarista : delega limpieza
+Hotel ..> Mesero : delega propinas
 Hotel ..> HotelException : lanza
+MenuConsola ..> Hotel : usa
+Main ..> Hotel : crea
+Main ..> MenuConsola : crea
 Huesped ..> TipoHuesped
 Habitacion ..> EstadoHabitacion
 Reservacion ..> EstadoReservacion
