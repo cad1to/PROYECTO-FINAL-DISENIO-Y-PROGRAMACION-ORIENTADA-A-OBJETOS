@@ -146,9 +146,4 @@ public abstract class Habitacion implements Facturable, Desactivable {
         validarPositivo(tarifaBase, "La tarifa base");
         this.tarifaBase = tarifaBase;
     }
-
-    /** @return estado actual de la habitación */
-    public EstadoHabitacion getEstado() {
-        return estado;
-    }
 }
