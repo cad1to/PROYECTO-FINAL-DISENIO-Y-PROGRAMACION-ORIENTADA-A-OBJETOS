@@ -22,6 +22,11 @@ public abstract class Habitacion implements Facturable, Desactivable {
     public void cambiarEstado(EstadoHabitacion e) {
     }
 
+    /** @return estado actual de la habitación */
+    public EstadoHabitacion getEstado() {
+        return estado;
+    }
+
     @Override
     public boolean isActivo() {
     }
