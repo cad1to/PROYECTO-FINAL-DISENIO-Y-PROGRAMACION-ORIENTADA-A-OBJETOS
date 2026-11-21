@@ -57,12 +57,12 @@ public class Hotel {
     /**
      * Registra un nuevo empleado en la lista del Hotel (RF-02).
      * <p>
-     * El id debe ser unico entre todos los empleado (RN-51); se debe comparar debido a que
-     * las bajas en el hotel son logicas (RN-34), por ello el id sigue ocupado.
+     * El id debe ser único entre todos los empleados (RN-51); se debe comparar debido a que
+     * las bajas en el hotel son lógicas (RN-34), por ello el id sigue ocupado.
      *
      * @param e empleado nuevo a registrar
-     * @throws RegistroDuplicadoException si ya existe un empleado con el mismo id.
-     * @throws HotelException excepcion base para todas las reglas del hotel
+     * @throws RegistroDuplicadoException si ya existe un empleado con el mismo id
+     * @throws HotelException excepción base para todas las reglas del hotel
      */
     public void registrarEmpleado(Empleado e) throws HotelException {
         for(Empleado existente : empleados) {
@@ -73,7 +73,24 @@ public class Hotel {
         empleados.add(e);
     }
 
-    public void registrarHabitacion(Habitacion h) {
+    /**
+     * Registra una nueva habitación en el hotel (RF-03).
+     * <p>
+     * El número debe ser único dentro del hotel (RN-11); se compara contra todas las
+     * habitaciones, incluso las dadas de baja, porque la baja es lógica y el número sigue
+     * ocupado (RN-34).
+     *
+     * @param h habitación nueva en el hotel
+     * @throws RegistroDuplicadoException si ya existe una habitación con el mismo número
+     * @throws HotelException excepción base para todas las reglas del hotel
+     */
+    public void registrarHabitacion(Habitacion h) throws HotelException {
+        for (Habitacion existente : habitaciones) {
+            if(existente.getNumero() == h.getNumero()) {
+                throw new RegistroDuplicadoException("Ya existe la habitación con el número: " + h.getNumero());
+            }
+        }
+        habitaciones.add(h);
     }
 
     public void registrarServicio(Servicio s) {
