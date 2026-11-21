@@ -35,7 +35,7 @@ public class Hotel {
     }
 
     /**
-     * Registra un huésped nuevo en el hotel (RF-01).
+     * Registra un huésped nuevo en el hotel.
      * <p>
      * El id del huésped debe ser único dentro del hotel; por ello se compara
      * contra todos los huéspedes registrados, incluso los dados de baja,
@@ -43,7 +43,7 @@ public class Hotel {
      *
      * @param h huésped que se va a registrar
      * @throws RegistroDuplicadoException si ya existe un huésped con el mismo id
-     * @throws HotelException             excepción base de las reglas del hotel
+     * @throws HotelException excepción base de las reglas del hotel
      */
     public void registrarHuesped(Huesped h) throws HotelException {
         for (Huesped existente : huespedes) {
@@ -54,7 +54,23 @@ public class Hotel {
         huespedes.add(h);
     }
 
-    public void registrarEmpleado(Empleado e) {
+    /**
+     * Registra un nuevo empleado en la lista del Hotel (RF-02).
+     * <p>
+     * El id debe ser unico entre todos los empleado (RN-51); se debe comparar debido a que
+     * las bajas en el hotel son logicas (RN-34), por ello el id sigue ocupado.
+     *
+     * @param e empleado nuevo a registrar
+     * @throws RegistroDuplicadoException si ya existe un empleado con el mismo id.
+     * @throws HotelException excepcion base para todas las reglas del hotel
+     */
+    public void registrarEmpleado(Empleado e) throws HotelException {
+        for(Empleado existente : empleados) {
+            if(existente.getId().equals(e.getId())) {
+                throw new RegistroDuplicadoException("Ya existe un empleado con el id "+e.getId());
+            }
+        }
+        empleados.add(e);
     }
 
     public void registrarHabitacion(Habitacion h) {
