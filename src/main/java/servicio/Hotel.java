@@ -1,5 +1,7 @@
 package servicio;
 
+import excepciones.HotelException;
+import excepciones.RegistroDuplicadoException;
 import modelo.alojamiento.EstadoHabitacion;
 import modelo.alojamiento.Habitacion;
 import modelo.catalogo.Servicio;
@@ -8,9 +10,9 @@ import modelo.personas.Empleado;
 import modelo.personas.Huesped;
 import modelo.personas.TipoHuesped;
 import modelo.reservas.Reservacion;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Hotel {
@@ -22,7 +24,34 @@ public class Hotel {
     protected List<Servicio> servicios;
     protected List<Reservacion> reservaciones;
 
-    public void registrarHuesped(Huesped h) {
+    public Hotel(String nombre, String direccion) {
+        this.nombre = nombre;
+        this.direccion = direccion;
+        this.habitaciones = new ArrayList<>();
+        this.empleados = new ArrayList<>();
+        this.huespedes = new ArrayList<>();
+        this.servicios = new ArrayList<>();
+        this.reservaciones = new ArrayList<>();
+    }
+
+    /**
+     * Registra un huésped nuevo en el hotel (RF-01).
+     * <p>
+     * El id del huésped debe ser único dentro del hotel; por ello se compara
+     * contra todos los huéspedes registrados, incluso los dados de baja,
+     * porque la baja es lógica y el id sigue ocupado.
+     *
+     * @param h huésped que se va a registrar
+     * @throws RegistroDuplicadoException si ya existe un huésped con el mismo id
+     * @throws HotelException             excepción base de las reglas del hotel
+     */
+    public void registrarHuesped(Huesped h) throws HotelException {
+        for (Huesped existente : huespedes) {
+            if (existente.getId().equals(h.getId())) {
+                throw new RegistroDuplicadoException("Ya existe un huésped con el id " + h.getId());
+            }
+        }
+        huespedes.add(h);
     }
 
     public void registrarEmpleado(Empleado e) {
