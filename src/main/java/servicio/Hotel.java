@@ -2,6 +2,7 @@ package servicio;
 
 import excepciones.HotelException;
 import excepciones.RegistroDuplicadoException;
+import excepciones.RegistroNoEncontradoException;
 import modelo.alojamiento.EstadoHabitacion;
 import modelo.alojamiento.Habitacion;
 import modelo.catalogo.Servicio;
@@ -65,8 +66,8 @@ public class Hotel {
      * @throws HotelException excepción base para todas las reglas del hotel
      */
     public void registrarEmpleado(Empleado e) throws HotelException {
-        for(Empleado existente : empleados) {
-            if(existente.getId().equals(e.getId())) {
+        for (Empleado existente : empleados) {
+            if (existente.getId().equals(e.getId())) {
                 throw new RegistroDuplicadoException("Ya existe un empleado con el id "+e.getId());
             }
         }
@@ -86,15 +87,66 @@ public class Hotel {
      */
     public void registrarHabitacion(Habitacion h) throws HotelException {
         for (Habitacion existente : habitaciones) {
-            if(existente.getNumero() == h.getNumero()) {
+            if (existente.getNumero() == h.getNumero()) {
                 throw new RegistroDuplicadoException("Ya existe la habitación con el número: " + h.getNumero());
             }
         }
         habitaciones.add(h);
     }
 
-    public void registrarServicio(Servicio s) {
+    /**
+     * Registra un nuevo servicio en el catálogo del hotel (RF-04).
+     * <p>
+     * El código debe ser único dentro del hotel (RN-33); se compara contra todos
+     * los servicios, incluso los dados de baja, porque la baja es lógica y el
+     * código sigue ocupado (RN-34). El parámetro puede ser cualquier subclase de
+     * {@code Servicio} (restaurante, spa o lavandería).
+     *
+     * @param s servicio nuevo a registrar
+     * @throws RegistroDuplicadoException si ya existe un servicio con el mismo código
+     * @throws HotelException             excepción base de las reglas del hotel
+     */
+    public void registrarServicio(Servicio s) throws HotelException {
+        for (Servicio existente : servicios) {
+            if (s.getCodigo().equals(existente.getCodigo())) {
+                throw new RegistroDuplicadoException("Ya existe un servicio con el código "+s.getCodigo());
+            }
+        }
+        servicios.add(s);
     }
+
+     /*
+        Agregación de métodos de búsqueda
+
+        Para evitar repetir ciertas líneas de búsqueda, decidí implementar métodos que se dedicaran a ello
+        para evitar repetir código y reciclar funciones.
+
+        Búsqueda de huéspedes, empleados, habitaciones, servicios y reservaciones
+      */
+
+    /**
+     * Busca un huésped activo por su id.
+     * <p>
+     * Un huésped dado de baja se trata como no encontrado (RN-56). Es un método
+     * auxiliar interno que usan las operaciones de {@code Hotel} que necesitan
+     * un huésped registrado y activo (RN-01).
+     *
+     * @param id id del huésped que se busca
+     * @return el huésped activo con ese id
+     * @throws RegistroNoEncontradoException si no existe o está dado de baja
+     */
+    private Huesped buscarHuesped(String id) throws RegistroNoEncontradoException {
+        for (Huesped existente : huespedes) {
+            if (existente.getId().equals(id)){
+                if (existente.isActivo()){
+                    return existente;
+                }
+                break;
+            }
+        }
+        throw new RegistroNoEncontradoException("El huésped "+id+" no fue encontrado");
+    }
+
 
     public Reservacion crearReservacion(String idHuesped, List<Integer> numerosHab, LocalDate ini, LocalDate fin, int numHuespedes) {
     }
