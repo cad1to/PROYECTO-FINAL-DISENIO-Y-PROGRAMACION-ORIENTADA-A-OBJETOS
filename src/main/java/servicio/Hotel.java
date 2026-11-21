@@ -232,19 +232,94 @@ public class Hotel {
     public Reservacion crearReservacion(String idHuesped, List<Integer> numerosHab, LocalDate ini, LocalDate fin, int numHuespedes) {
     }
 
+    /**
+     * Lista los huéspedes activos del hotel (RF-06).
+     * <p>
+     * Los huéspedes dados de baja no aparecen en la consulta (RN-35), aunque se
+     * conservan en el hotel (RN-34). Devuelve una lista nueva, por lo que modificarla
+     * no altera la colección interna (RN-39).
+     *
+     * @return lista de huéspedes activos; vacía si no hay ninguno
+     */
     public List<Huesped> listarHuespedes() {
+        List<Huesped> huespedesActivos = new ArrayList<>();
+        for (Huesped existente : huespedes) {
+            if (existente.isActivo()) {
+                huespedesActivos.add(existente);
+            }
+        }
+        return huespedesActivos;
     }
 
+    /**
+     * Lista los empleados activos del hotel (RF-06).
+     * <p>
+     * Los empleados dados de baja no aparecen en la consulta (RN-35), aunque se
+     * conservan en el hotel (RN-34). Devuelve una lista nueva, por lo que modificarla
+     * no altera la colección interna (RN-39).
+     *
+     * @return lista de empleados activos; vacía si no hay ninguno
+     */
     public List<Empleado> listarEmpleados() {
+        List<Empleado> empleadosActivos = new ArrayList<>();
+        for (Empleado existente : empleados) {
+            if (existente.isActivo()) {
+                empleadosActivos.add(existente);
+            }
+        }
+        return empleadosActivos;
     }
 
+    /**
+     * Lista las habitaciones activas del hotel (RF-06).
+     * <p>
+     * Las habitaciones dadas de baja no aparecen en la consulta (RN-35), aunque se
+     * conservan en el hotel (RN-34). Devuelve una lista nueva, por lo que modificarla
+     * no altera la colección interna (RN-39).
+     *
+     * @return lista de habitaciones activas; vacía si no hay ninguna
+     */
     public List<Habitacion> listarHabitaciones() {
+        List<Habitacion> habitacionesActivas = new ArrayList<>();
+        for (Habitacion existente : habitaciones) {
+            if (existente.isActivo()) {
+                habitacionesActivas.add(existente);
+            }
+        }
+        return habitacionesActivas;
     }
 
+    /**
+     * Lista los servicios activos del catálogo del hotel (RF-06).
+     * <p>
+     * Los servicios dados de baja no aparecen en la consulta (RN-35), aunque se
+     * conservan para el historial de las facturas (RN-34, RN-38). Devuelve una lista
+     * nueva, por lo que modificarla no altera la colección interna (RN-39).
+     *
+     * @return lista de servicios activos; vacía si no hay ninguno
+     */
     public List<Servicio> listarServicios() {
+        List<Servicio> serviciosActivos = new ArrayList<>();
+        for (Servicio existente : servicios) {
+            if (existente.isActivo()) {
+                serviciosActivos.add(existente);
+            }
+        }
+        return serviciosActivos;
     }
 
+    /**
+     * Lista todas las reservaciones del hotel con su estado (RF-06).
+     * <p>
+     * A diferencia de los demás listados, no se filtran: se incluyen también las
+     * FINALIZADAS y CANCELADAS (RN-35). Devuelve una copia de la colección, por lo
+     * que modificarla no altera la lista interna (RN-39).
+     *
+     * @return lista con todas las reservaciones; vacía si no hay ninguna
+     */
     public List<Reservacion> listarReservaciones() {
+        // El constructor de ArrayList copia toda la lista, no es necesario recorrerla con for
+        return new ArrayList<>(reservaciones);
     }
 
     public List<Habitacion> buscarDisponibles(LocalDate ini, LocalDate fin) {
