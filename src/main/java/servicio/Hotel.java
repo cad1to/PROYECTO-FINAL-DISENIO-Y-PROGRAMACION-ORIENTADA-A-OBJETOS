@@ -147,6 +147,87 @@ public class Hotel {
         throw new RegistroNoEncontradoException("El huésped "+id+" no fue encontrado");
     }
 
+    /**
+     * Busca un empleado activo por su id.
+     * <p>
+     * Un empleado dado de baja se trata como no encontrado (RN-56).
+     *
+     * @param id id del empleado que se busca
+     * @return el empleado activo con ese id
+     * @throws RegistroNoEncontradoException si no existe o está dado de baja
+     */
+    private Empleado buscarEmpleado(String id) throws RegistroNoEncontradoException {
+        for (Empleado existente : empleados) {
+            if (existente.getId().equals(id)) {
+                if (existente.isActivo()) {
+                    return existente;
+                }
+                break;
+            }
+        }
+        throw new RegistroNoEncontradoException("El empleado " + id + " no fue encontrado");
+    }
+
+    /**
+     * Busca una habitación activa por su número.
+     * <p>
+     * Una habitación dada de baja se trata como no encontrada (RN-56).
+     *
+     * @param numero número de la habitación que se busca
+     * @return la habitación activa con ese número
+     * @throws RegistroNoEncontradoException si no existe o está dada de baja
+     */
+    private Habitacion buscarHabitacion(int numero) throws RegistroNoEncontradoException {
+        for (Habitacion existente : habitaciones) {
+            if (existente.getNumero() == numero) {
+                if (existente.isActivo()) {
+                    return existente;
+                }
+                break;
+            }
+        }
+        throw new RegistroNoEncontradoException("La habitación " + numero + " no fue encontrada");
+    }
+
+    /**
+     * Busca un servicio activo por su código.
+     * <p>
+     * Un servicio dado de baja se trata como no encontrado (RN-56).
+     *
+     * @param codigo código del servicio que se busca
+     * @return el servicio activo con ese código
+     * @throws RegistroNoEncontradoException si no existe o está dado de baja
+     */
+    private Servicio buscarServicio(String codigo) throws RegistroNoEncontradoException {
+        for (Servicio existente : servicios) {
+            if (existente.getCodigo().equals(codigo)) {
+                if (existente.isActivo()) {
+                    return existente;
+                }
+                break;
+            }
+        }
+        throw new RegistroNoEncontradoException("El servicio " + codigo + " no fue encontrado");
+    }
+
+    /**
+     * Busca una reservación por su id.
+     * <p>
+     * Las reservaciones no tienen baja lógica: se cancelan y se conservan con su
+     * estado (RN-37), por eso aquí no se revisa si están activas.
+     *
+     * @param id id de la reservación que se busca
+     * @return la reservación con ese id
+     * @throws RegistroNoEncontradoException si no existe ninguna con ese id
+     */
+    private Reservacion buscarReservacion(String id) throws RegistroNoEncontradoException {
+        for (Reservacion existente : reservaciones) {
+            if (existente.getId().equals(id)) {
+                return existente;
+            }
+        }
+        throw new RegistroNoEncontradoException("La reservación " + id + " no fue encontrada");
+    }
 
     public Reservacion crearReservacion(String idHuesped, List<Integer> numerosHab, LocalDate ini, LocalDate fin, int numHuespedes) {
     }
