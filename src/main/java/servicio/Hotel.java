@@ -1,8 +1,10 @@
 package servicio;
 
+import excepciones.BajaNoPermitidaException;
 import excepciones.HotelException;
 import excepciones.RegistroDuplicadoException;
 import excepciones.RegistroNoEncontradoException;
+import excepciones.ReservacionInvalidaException;
 import modelo.alojamiento.EstadoHabitacion;
 import modelo.alojamiento.Habitacion;
 import modelo.catalogo.Servicio;
@@ -10,11 +12,13 @@ import modelo.facturacion.Factura;
 import modelo.personas.Empleado;
 import modelo.personas.Huesped;
 import modelo.personas.TipoHuesped;
+import modelo.reservas.EstadoReservacion;
 import modelo.reservas.Reservacion;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Hotel {
     protected String nombre;
@@ -343,22 +347,128 @@ public class Hotel {
     public void modificarFechasReservacion(String idRes, LocalDate ini, LocalDate fin) {
     }
 
-    public void darDeBajaHuesped(String id) {
+    /**
+     * Da de baja lógica a un huésped y cancela sus reservaciones ACTIVA (RF-08, RF-09).
+     * <p>
+     * El huésped no se elimina: se marca como inactivo para conservar el historial
+     * (RN-34). Si tiene una reservación EN_CURSO la baja se rechaza (RN-55). Si no, se
+     * cancelan todas sus reservaciones ACTIVA con las reglas de RN-08 a RN-10, usando el
+     * mismo momento para todas. La validación se hace antes de cancelar: si se rechaza la
+     * baja, no se cancela nada. Como un huésped dado de baja se trata como no encontrado
+     * (RN-56), darlo de baja dos veces lanza la misma excepción que un id inexistente.
+     *
+     * @param id id del huésped que se da de baja
+     * @throws RegistroNoEncontradoException si no existe o ya está dado de baja
+     * @throws BajaNoPermitidaException si tiene una reservación EN_CURSO
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void darDeBajaHuesped(String id) throws HotelException {
+        Huesped huesped = buscarHuesped(id);
+        List<Reservacion> reservacionesActivas = new ArrayList<>();
+        for (Reservacion existente : reservaciones) {
+            if (existente.getHuesped().equals(huesped)) {
+                if (existente.getEstado() ==  EstadoReservacion.EN_CURSO){
+                    throw new BajaNoPermitidaException("El huesped "+id+" tiene una reservacion en curso.");
+                }
+                if (existente.getEstado() ==  EstadoReservacion.ACTIVA) {
+                    reservacionesActivas.add(existente);
+                }
+            }
+        }
+        LocalDateTime ahora = LocalDateTime.now();
+        for (Reservacion existente : reservacionesActivas) {
+            cancelarReservacion(existente.getId(), ahora);
+        }
+        huesped.darDeBaja();
     }
 
-    public void darDeBajaEmpleado(String id) {
+    /**
+     * Da de baja lógica a un empleado (RF-08).
+     * <p>
+     * El empleado no se elimina: se marca como inactivo para conservar el historial
+     * (RN-34). Como un empleado dado de baja se trata como no encontrado (RN-56),
+     * darlo de baja dos veces lanza la misma excepción que un id inexistente.
+     *
+     * @param id id del empleado que se da de baja
+     * @throws RegistroNoEncontradoException si no existe o ya está dado de baja
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void darDeBajaEmpleado(String id) throws HotelException {
+        Empleado empleado = buscarEmpleado(id);
+        empleado.darDeBaja();
     }
 
-    public void darDeBajaHabitacion(int num) {
+    /**
+     * Da de baja lógica a una habitación (RF-08, RF-09).
+     * <p>
+     * La habitación no se elimina: se marca como inactiva para conservar el historial
+     * (RN-34). Se rechaza la baja si la habitación pertenece a alguna reservación ACTIVA
+     * o EN_CURSO (RN-15); las FINALIZADAS y CANCELADAS no la bloquean. La validación se
+     * hace antes de la baja, por lo que si se rechaza la habitación no cambia. Como una
+     * habitación dada de baja se trata como no encontrada (RN-56), darla de baja dos
+     * veces lanza la misma excepción que un número inexistente.
+     *
+     * @param num número de la habitación que se da de baja
+     * @throws RegistroNoEncontradoException si no existe o ya está dada de baja
+     * @throws BajaNoPermitidaException si tiene reservaciones ACTIVA o EN_CURSO
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void darDeBajaHabitacion(int num) throws HotelException {
+        Habitacion habitacion = buscarHabitacion(num);
+        for (Reservacion reservacionExistente : reservaciones) {
+            EstadoReservacion estadoReservacion = reservacionExistente.getEstado();
+            if (estadoReservacion == EstadoReservacion.ACTIVA || estadoReservacion == EstadoReservacion.EN_CURSO) {
+                for (Habitacion habitacionExistente : reservacionExistente.getHabitaciones()) {
+                    if (habitacionExistente == habitacion) {
+                        throw new BajaNoPermitidaException("La habitación " + num
+                                + " tiene reservaciones ACTIVA o EN_CURSO.");
+                    }
+                }
+            }
+        }
+        habitacion.darDeBaja();
     }
 
-    public void darDeBajaServicio(String codigo) {
+    /**
+     * Da de baja lógica a un servicio del catálogo (RF-08).
+     * <p>
+     * El servicio no se elimina: se marca como inactivo, deja de ofrecerse en el
+     * catálogo pero sus consumos anteriores se conservan en las facturas (RN-34, RN-38).
+     * Como un servicio dado de baja se trata como no encontrado (RN-56), darlo de baja
+     * dos veces lanza la misma excepción que un código inexistente.
+     *
+     * @param codigo código del servicio que se da de baja
+     * @throws RegistroNoEncontradoException si no existe o ya está dado de baja
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void darDeBajaServicio(String codigo) throws HotelException {
+        Servicio servicio = buscarServicio(codigo);
+        servicio.darDeBaja();
     }
 
-    public void cancelarReservacion(String idRes, LocalDateTime ahora) {
+    /**
+     * Cancela una reservación ACTIVA (RF-10).
+     * <p>
+     * La cancelación aplica a la reservación completa y no la elimina: pasa a CANCELADA y
+     * se conserva en el hotel (RN-10, RN-37). Solo se puede cancelar mientras esté ACTIVA
+     * (RN-08). Si faltan menos de {@code HORAS_MINIMAS_CANCELACION} horas para la entrada,
+     * la reservación registra {@code CARGO_CANCELACION} una sola vez, sin generar factura
+     * (RN-09). Hotel solo localiza la reservación; la validación del estado y el cargo los
+     * resuelve {@code Reservacion.cancelar} (RN-39).
+     *
+     * @param idRes id de la reservación que se cancela
+     * @param ahora momento en que se solicita la cancelación; con él se mide la anticipación
+     * @throws RegistroNoEncontradoException si no existe una reservación con ese id
+     * @throws ReservacionInvalidaException  si la reservación no está ACTIVA
+     * @throws HotelException                excepción base de las reglas del hotel
+     */
+    public void cancelarReservacion(String idRes, LocalDateTime ahora) throws HotelException {
+        Reservacion reservacion = buscarReservacion(idRes);
+        reservacion.cancelar(ahora);
     }
 
     public void realizarCheckIn(String idRecepcionista, String idRes) {
+
     }
 
     public void realizarCheckOut(String idRecepcionista, String idRes) {
