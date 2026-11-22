@@ -329,22 +329,153 @@ public class Hotel {
     public List<Habitacion> buscarDisponibles(LocalDate ini, LocalDate fin) {
     }
 
-    public void actualizarTipoHuesped(String id, TipoHuesped t) {
+    /**
+     * Actualiza el tipo de un huésped (RF-07).
+     * <p>
+     * Del huésped solo puede actualizarse su tipo, REGULAR o VIP (RN-36, RN-54).
+     * Un huésped dado de baja se trata como no encontrado (RN-56).
+     *
+     * @param id id del huésped que se actualiza
+     * @param t  nuevo tipo del huésped; no puede ser nulo
+     * @throws RegistroNoEncontradoException si no existe o está dado de baja
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void actualizarTipoHuesped(String id, TipoHuesped t) throws HotelException {
+        Huesped huesped = buscarHuesped(id);
+        huesped.setTipo(t);
     }
 
-    public void actualizarSalarioEmpleado(String id, double salario) {
+    /**
+     * Actualiza el salario base de un empleado (RF-07).
+     * <p>
+     * Del empleado solo puede actualizarse su salario base, que debe ser positivo
+     * (RN-53, RN-54). Un empleado dado de baja se trata como no encontrado (RN-56).
+     *
+     * @param id      id del empleado que se actualiza
+     * @param salario nuevo salario base; debe ser positivo
+     * @throws RegistroNoEncontradoException si no existe o está dado de baja
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void actualizarSalarioEmpleado(String id, double salario) throws HotelException {
+        Empleado empleado = buscarEmpleado(id);
+        empleado.setSalarioBase(salario);
     }
 
-    public void actualizarEstadoHabitacion(int num, EstadoHabitacion e) {
+    /**
+     * Actualiza el estado de una habitación (RF-07).
+     * <p>
+     * El estado OCUPADA solo lo asigna el check-in y solo lo libera el check-out (RN-42):
+     * no se puede asignar OCUPADA manualmente ni cambiar el estado de una habitación que
+     * ya está OCUPADA. Una habitación dada de baja se trata como no encontrada (RN-56).
+     *
+     * @param num número de la habitación que se actualiza
+     * @param e   nuevo estado de la habitación
+     * @throws RegistroNoEncontradoException si no existe o está dada de baja
+     * @throws HotelException cambiar el estado de una habitación OCUPADA (RN-42)
+     */
+    public void actualizarEstadoHabitacion(int num, EstadoHabitacion e) throws HotelException {
+        Habitacion habitacion = buscarHabitacion(num);
+        if (e == EstadoHabitacion.OCUPADA) {
+            throw new HotelException("El estado OCUPADA solo lo asigna el check-in.");
+        }
+        if (habitacion.getEstado() == EstadoHabitacion.OCUPADA) {
+            throw new HotelException("La habitación " + num + " está OCUPADA; solo el check-out la libera.");
+        }
+        habitacion.cambiarEstado(e);
     }
 
-    public void actualizarTarifaHabitacion(int num, double tarifa) {
+    /**
+     * Actualiza la tarifa base de una habitación (RF-07).
+     * <p>
+     * La tarifa debe ser positiva (RN-53, RN-54). El cambio no modifica las facturas ya
+     * generadas, porque cada detalle conserva su concepto, cantidad y monto (RN-45).
+     * Una habitación dada de baja se trata como no encontrada (RN-56).
+     *
+     * @param num    número de la habitación que se actualiza
+     * @param tarifa nueva tarifa base por noche; debe ser positiva
+     * @throws RegistroNoEncontradoException si no existe o está dada de baja
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void actualizarTarifaHabitacion(int num, double tarifa) throws HotelException {
+        Habitacion habitacion = buscarHabitacion(num);
+        habitacion.setTarifaBase(tarifa);
     }
 
-    public void actualizarPrecioServicio(String codigo, double precio) {
+    /**
+     * Actualiza el precio base de un servicio del catálogo (RF-07).
+     * <p>
+     * El precio debe ser positivo (RN-53, RN-54). El cambio no modifica las facturas ya
+     * generadas, porque cada detalle conserva su concepto, cantidad y monto (RN-45).
+     * Un servicio dado de baja se trata como no encontrado (RN-56).
+     *
+     * @param codigo código del servicio que se actualiza
+     * @param precio nuevo precio base; debe ser positivo
+     * @throws RegistroNoEncontradoException si no existe o está dado de baja
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void actualizarPrecioServicio(String codigo, double precio) throws HotelException {
+        Servicio servicio = buscarServicio(codigo);
+        servicio.setPrecioBase(precio);
     }
 
-    public void modificarFechasReservacion(String idRes, LocalDate ini, LocalDate fin) {
+    /**
+     * Indica si una habitación está disponible para un rango de fechas (RN-40).
+     * <p>
+     * Está disponible si está activa, no está en MANTENIMIENTO (RN-14) y ninguna otra
+     * reservación ACTIVA o EN_CURSO que la incluya se traslapa con el rango (RN-02). Su
+     * estado actual (OCUPADA, LIMPIEZA) no impide reservar fechas futuras.
+     *
+     * @param habitacion habitación que se revisa
+     * @param ini fecha de entrada del rango
+     * @param fin fecha de salida del rango
+     * @param ignorada reservación que no cuenta para el traslape (la que se está
+     *                 modificando), o {@code null} para considerarlas todas
+     * @return {@code true} si la habitación puede reservarse en el rango
+     */
+    private boolean estaDisponible(Habitacion habitacion, LocalDate ini, LocalDate fin, Reservacion ignorada) {
+        if (!habitacion.isActivo() || habitacion.getEstado() == EstadoHabitacion.MANTENIMIENTO) {
+            return false;
+        }
+        for (Reservacion existente : reservaciones) {
+            if (existente != ignorada
+                    && existente.getHabitaciones().contains(habitacion)
+                    && existente.seTraslapaCon(ini, fin)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Modifica las fechas de una reservación ACTIVA (RF-07).
+     * <p>
+     * Solo se pueden modificar las fechas de una reservación ACTIVA y la salida debe ser
+     * posterior a la entrada (RN-07, RN-06); ambas cosas las valida {@code Reservacion}.
+     * Hotel vuelve a validar que todas sus habitaciones estén disponibles en el nuevo rango
+     * (RN-40), sin contar la propia reservación en el traslape (RN-02). Se permiten fechas
+     * anteriores a hoy (RN-41). Si alguna habitación no está disponible se rechaza todo el
+     * cambio y la reservación conserva sus fechas originales.
+     *
+     * @param idRes id de la reservación que se modifica
+     * @param ini   nueva fecha de entrada
+     * @param fin   nueva fecha de salida
+     * @throws RegistroNoEncontradoException si no existe una reservación con ese id
+     * @throws ReservacionInvalidaException  si la reservación no está ACTIVA, las fechas son
+     *                                       inválidas o alguna habitación no está disponible
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public void modificarFechasReservacion(String idRes, LocalDate ini, LocalDate fin) throws HotelException {
+        Reservacion reservacion = buscarReservacion(idRes);
+        LocalDate entradaAnterior = reservacion.getFechaEntrada();
+        LocalDate salidaAnterior = reservacion.getFechaSalida();
+        reservacion.modificarFechas(ini, fin);
+        for (Habitacion habitacion : reservacion.getHabitaciones()) {
+            if (!estaDisponible(habitacion, ini, fin, reservacion)) {
+                reservacion.modificarFechas(entradaAnterior, salidaAnterior);
+                throw new ReservacionInvalidaException("La habitación " + habitacion.getNumero()
+                        + " no está disponible del " + ini + " al " + fin + ".");
+            }
+        }
     }
 
     /**
