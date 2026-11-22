@@ -2,6 +2,7 @@ package servicio;
 
 import excepciones.BajaNoPermitidaException;
 import excepciones.HotelException;
+import excepciones.PagoPendienteException;
 import excepciones.RegistroDuplicadoException;
 import excepciones.RegistroNoEncontradoException;
 import excepciones.ReservacionInvalidaException;
@@ -11,6 +12,7 @@ import modelo.catalogo.Servicio;
 import modelo.facturacion.Factura;
 import modelo.personas.Empleado;
 import modelo.personas.Huesped;
+import modelo.personas.Recepcionista;
 import modelo.personas.TipoHuesped;
 import modelo.reservas.EstadoReservacion;
 import modelo.reservas.Reservacion;
@@ -18,7 +20,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class Hotel {
     protected String nombre;
@@ -590,19 +591,76 @@ public class Hotel {
      * @param idRes id de la reservación que se cancela
      * @param ahora momento en que se solicita la cancelación; con él se mide la anticipación
      * @throws RegistroNoEncontradoException si no existe una reservación con ese id
-     * @throws ReservacionInvalidaException  si la reservación no está ACTIVA
-     * @throws HotelException                excepción base de las reglas del hotel
+     * @throws ReservacionInvalidaException si la reservación no está ACTIVA
+     * @throws HotelException excepción base de las reglas del hotel
      */
     public void cancelarReservacion(String idRes, LocalDateTime ahora) throws HotelException {
         Reservacion reservacion = buscarReservacion(idRes);
         reservacion.cancelar(ahora);
     }
 
-    public void realizarCheckIn(String idRecepcionista, String idRes) {
-
+    /**
+     * Busca un recepcionista activo por su id.
+     * <p>
+     * Es un método auxiliar interno: el id debe corresponder a un empleado activo (RN-56)
+     * cuyo rol sea recepcionista, porque solo él realiza el check-in y el check-out (RN-44).
+     *
+     * @param id id del recepcionista que se busca
+     * @return el recepcionista activo con ese id
+     * @throws RegistroNoEncontradoException si no existe o está dado de baja
+     * @throws HotelException si el empleado existe pero no es recepcionista
+     */
+    private Recepcionista buscarRecepcionista(String id) throws HotelException {
+        Empleado empleado = buscarEmpleado(id);
+        if (!(empleado instanceof Recepcionista recepcionista)) {
+            throw new HotelException("El empleado " + id + " no es recepcionista.");
+        }
+        return recepcionista;
     }
 
-    public void realizarCheckOut(String idRecepcionista, String idRes) {
+    /**
+     * Registra el check-in de una reservación (RF-11).
+     * <p>
+     * Lo realiza un recepcionista activo (RN-44). Solo aplica a una reservación ACTIVA cuyas
+     * habitaciones estén todas DISPONIBLES: la reservación pasa a EN_CURSO y sus habitaciones
+     * a OCUPADA (RN-13); si alguna no está DISPONIBLE se rechaza todo el check-in (RN-43). No
+     * se valida que la fecha actual coincida con la de entrada (RN-43). Hotel solo localiza al
+     * recepcionista y la reservación; el estado lo valida {@code Reservacion} (RN-39).
+     *
+     * @param idRecepcionista id del recepcionista que realiza el check-in
+     * @param idRes           id de la reservación a la que se hace check-in
+     * @throws RegistroNoEncontradoException si el recepcionista no existe o está dado de baja,
+     *                                       o no existe la reservación
+     * @throws ReservacionInvalidaException si la reservación no está ACTIVA o alguna habitación
+     *                                      no está DISPONIBLE
+     * @throws HotelException si el empleado no es recepcionista
+     */
+    public void realizarCheckIn(String idRecepcionista, String idRes) throws HotelException {
+        Recepcionista recepcionista = buscarRecepcionista(idRecepcionista);
+        Reservacion reservacion = buscarReservacion(idRes);
+        recepcionista.hacerCheckIn(reservacion);
+    }
+
+    /**
+     * Registra el check-out de una reservación (RF-11).
+     * <p>
+     * Lo realiza un recepcionista activo (RN-44). Solo aplica a una reservación EN_CURSO cuya
+     * factura ya fue generada y está pagada (RN-27): la reservación pasa a FINALIZADA y sus
+     * habitaciones a LIMPIEZA (RN-13). Hotel solo localiza al recepcionista y la reservación;
+     * el estado y el pago los valida {@code Reservacion} (RN-39).
+     *
+     * @param idRecepcionista id del recepcionista que realiza el check-out
+     * @param idRes           id de la reservación a la que se hace check-out
+     * @throws RegistroNoEncontradoException si el recepcionista no existe o está dado de baja,
+     *                                       o no existe la reservación
+     * @throws ReservacionInvalidaException si la reservación no está EN_CURSO
+     * @throws PagoPendienteException si la factura no se ha generado o no está pagada
+     * @throws HotelException si el empleado no es recepcionista
+     */
+    public void realizarCheckOut(String idRecepcionista, String idRes) throws HotelException {
+        Recepcionista recepcionista = buscarRecepcionista(idRecepcionista);
+        Reservacion reservacion = buscarReservacion(idRes);
+        recepcionista.hacerCheckOut(reservacion);
     }
 
     public void registrarConsumo(String idRes, String codigoServicio, int cantidad) {
