@@ -327,7 +327,27 @@ public class Hotel {
         return new ArrayList<>(reservaciones);
     }
 
+    /**
+     * Busca las habitaciones disponibles en un rango de fechas (RF-06).
+     * <p>
+     * Una habitación está disponible si está activa, no está en MANTENIMIENTO (RN-14) y no
+     * se traslapa con ninguna reservación ACTIVA o EN_CURSO (RN-02, RN-40); la salida de una
+     * reservación y la entrada de otra pueden caer el mismo día. Su estado actual (OCUPADA,
+     * LIMPIEZA) no impide reservar fechas futuras. Devuelve una lista nueva, por lo que
+     * modificarla no altera la colección interna (RN-39).
+     *
+     * @param ini fecha de entrada del rango
+     * @param fin fecha de salida del rango
+     * @return lista de habitaciones disponibles; vacía si no hay ninguna
+     */
     public List<Habitacion> buscarDisponibles(LocalDate ini, LocalDate fin) {
+        List<Habitacion> disponibles = new ArrayList<>();
+        for (Habitacion habitacion : listarHabitaciones()) {
+            if (estaDisponible(habitacion, ini, fin, null)) {
+                disponibles.add(habitacion);
+            }
+        }
+        return disponibles;
     }
 
     /**
