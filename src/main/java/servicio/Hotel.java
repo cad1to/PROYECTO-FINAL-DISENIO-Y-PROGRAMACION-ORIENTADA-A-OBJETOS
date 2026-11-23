@@ -6,14 +6,14 @@ import excepciones.PagoPendienteException;
 import excepciones.RegistroDuplicadoException;
 import excepciones.RegistroNoEncontradoException;
 import excepciones.ReservacionInvalidaException;
-import modelo.alojamiento.EstadoHabitacion;
-import modelo.alojamiento.Habitacion;
+import modelo.alojamiento.*;
 import modelo.catalogo.Servicio;
 import modelo.facturacion.Factura;
 import modelo.personas.Empleado;
 import modelo.personas.Huesped;
 import modelo.personas.Recepcionista;
 import modelo.personas.TipoHuesped;
+import modelo.reservas.ConsumoServicio;
 import modelo.reservas.EstadoReservacion;
 import modelo.reservas.Reservacion;
 import java.time.LocalDate;
@@ -233,8 +233,46 @@ public class Hotel {
         }
         throw new RegistroNoEncontradoException("La reservación " + id + " no fue encontrada");
     }
+    public void mostrarHabitacionesDisponibles(LocalDate ini,LocalDate fin) throws HotelException {
+        List<Habitacion> habitacionesDisponibles = new ArrayList<>(buscarDisponibles(ini, fin));
+        System.out.println("Habitaciones disponibles: " + habitacionesDisponibles.size());
 
-    public Reservacion crearReservacion(String idHuesped, List<Integer> numerosHab, LocalDate ini, LocalDate fin, int numHuespedes) {
+        for (Habitacion habitacionExistente : habitacionesDisponibles) {
+            System.out.println("Habitacion: "+habitacionExistente.getNumero());
+            switch (habitacionExistente) {
+                case HabitacionSencilla _ -> System.out.println("Tipo: Habitación Sencilla");
+                case Suite _ -> System.out.println("Tipo: Suite");
+                case HabitacionDoble _ -> System.out.println("Tipo: Habitacion Doble");
+                default -> System.out.println("No existe el tipo de habitacion");
+            }
+            System.out.println("Piso: "+habitacionExistente.getPiso());
+            System.out.println("Capacidad: "+habitacionExistente.getCapacidad());
+            System.out.println("Tarifa Base: "+habitacionExistente.getTarifaBase());
+        }
+    }
+
+
+/*
+        habitacionesReserva.removeIf(h -> h.getNumero() != numeroHabitacion);
+        numerosHab.remove(numeroHabitacion);
+ */
+    public void crearReservacion(String idHuesped, List<Integer> numerosHab, LocalDate ini, LocalDate fin, int numHuespedes) throws HotelException {
+        Huesped huesped = buscarHuesped(idHuesped);
+        String idReservacion = String.valueOf(reservaciones.size()+1);
+
+        // pendiente la validacion de la existencia de habitaciones.
+        List<Habitacion> habitacionesReserva = new ArrayList<>();
+        for (Habitacion existente : buscarDisponibles(ini, fin)) {
+            for (Integer numeroHabitacion: numerosHab) {
+                 if (existente.getNumero() == numeroHabitacion) {
+                     habitacionesReserva.add(existente);
+                 }
+                 numerosHab.remove(numeroHabitacion);
+                 break;
+            }
+        }
+
+        reservaciones.add(new Reservacion(idReservacion,huesped,habitacionesReserva,ini,fin,numHuespedes));
     }
 
     /**
@@ -343,6 +381,9 @@ public class Hotel {
     public List<Habitacion> buscarDisponibles(LocalDate ini, LocalDate fin) {
         List<Habitacion> disponibles = new ArrayList<>();
         for (Habitacion habitacion : listarHabitaciones()) {
+            /*
+            Ahora como no revisare reservaciones, simplemente le paso null
+             */
             if (estaDisponible(habitacion, ini, fin, null)) {
                 disponibles.add(habitacion);
             }
@@ -683,13 +724,59 @@ public class Hotel {
         recepcionista.hacerCheckOut(reservacion);
     }
 
-    public void registrarConsumo(String idRes, String codigoServicio, int cantidad) {
+    public void registrarConsumo(String idRes, String codigoServicio, int cantidad) throws HotelException {
+        //
     }
 
-    public Factura generarFactura(String idRes) {
+    /**
+     * Genera la factura de una reservación EN_CURSO (RF-13).
+     * <p>
+     * La factura se genera una sola vez (RN-46). Incluye un detalle por cada habitación
+     * (por las noches de la estancia) y uno por cada consumo registrado (RN-24). El
+     * descuento depende del tipo de huésped (RN-26) y el folio es único porque se
+     * deriva del id de la reservación (RN-52).
+     *
+     * @param idRes id de la reservación que se factura
+     * @return la factura generada y asociada a la reservación
+     * @throws RegistroNoEncontradoException si no existe la reservación
+     * @throws ReservacionInvalidaException si no está EN_CURSO o ya tiene factura
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public Factura generarFactura(String idRes) throws HotelException {
+        Reservacion reservacion = buscarReservacion(idRes);
+        Factura factura = new Factura("F-" + reservacion.getId(), LocalDate.now(),
+                reservacion.getHuesped().calcularDescuento());
+
+        int noches = reservacion.calcularNoches();
+        for (Habitacion habitacion : reservacion.getHabitaciones()) {
+            factura.agregarDetalle(habitacion, noches);
+        }
+        for (ConsumoServicio consumo : reservacion.getConsumos()) {
+            factura.agregarDetalle(consumo.getServicio(), consumo.getCantidad());
+        }
+
+        reservacion.setFactura(factura);
+        return factura;
     }
 
-    public void pagarFactura(String idRes) {
+    /**
+     * Registra el pago de la factura de una reservación (RF-13).
+     * <p>
+     * La factura debe existir y no estar pagada (RN-46); esto último lo valida
+     * {@code Factura}.
+     *
+     * @param idRes id de la reservación cuya factura se paga
+     * @throws RegistroNoEncontradoException si no existe la reservación
+     * @throws PagoPendienteException si la reservación aún no tiene factura
+     * @throws HotelException si la factura ya estaba pagada
+     */
+    public void pagarFactura(String idRes) throws HotelException {
+        Reservacion reservacion = buscarReservacion(idRes);
+        Factura factura = reservacion.getFactura();
+        if (factura == null) {
+            throw new PagoPendienteException("La reservación " + idRes + " no tiene factura generada.");
+        }
+        factura.pagar();
     }
 
     public void registrarLimpieza(String idCamarista, int numHabitacion) {
