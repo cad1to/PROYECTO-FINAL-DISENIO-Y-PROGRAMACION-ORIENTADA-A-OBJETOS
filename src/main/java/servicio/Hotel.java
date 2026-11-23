@@ -235,47 +235,57 @@ public class Hotel {
         }
         throw new RegistroNoEncontradoException("La reservación " + id + " no fue encontrada");
     }
-    public void mostrarHabitacionesDisponibles(LocalDate ini,LocalDate fin) throws HotelException {
-        List<Habitacion> habitacionesDisponibles = new ArrayList<>(buscarDisponibles(ini, fin));
-        System.out.println("Habitaciones disponibles: " + habitacionesDisponibles.size());
-
-        for (Habitacion habitacionExistente : habitacionesDisponibles) {
-            System.out.println("Habitacion: "+habitacionExistente.getNumero());
-            switch (habitacionExistente) {
-                case HabitacionSencilla _ -> System.out.println("Tipo: Habitación Sencilla");
-                case Suite _ -> System.out.println("Tipo: Suite");
-                case HabitacionDoble _ -> System.out.println("Tipo: Habitacion Doble");
-                default -> System.out.println("No existe el tipo de habitacion");
-            }
-            System.out.println("Piso: "+habitacionExistente.getPiso());
-            System.out.println("Capacidad: "+habitacionExistente.getCapacidad());
-            System.out.println("Tarifa Base: "+habitacionExistente.getTarifaBase());
-        }
-    }
 
 
-/*
-        habitacionesReserva.removeIf(h -> h.getNumero() != numeroHabitacion);
-        numerosHab.remove(numeroHabitacion);
- */
-
-    public void crearReservacion(String idHuesped, List<Integer> numerosHab, LocalDate ini, LocalDate fin, int numHuespedes) throws HotelException {
+    /**
+     * Crea una reservación ACTIVA para un huésped (RF-05).
+     * <p>
+     * El huésped debe estar registrado y activo (RN-01). Todas las habitaciones solicitadas
+     * deben estar disponibles en el rango (RN-40); si alguna no lo está se rechaza toda la
+     * reservación y no queda ninguna parcial (RN-03). La excepción indica cuáles habitaciones
+     * no están disponibles para que la interfaz pueda informarlo. Las fechas (RN-06) y la
+     * capacidad (RN-05) las valida {@code Reservacion}. Se permiten fechas anteriores a hoy
+     * (RN-41). El id lo genera el sistema.
+     *
+     * @param idHuesped   id del huésped que reserva
+     * @param numerosHab  números de las habitaciones que se reservan; al menos una
+     * @param ini         fecha de entrada
+     * @param fin         fecha de salida
+     * @param numHuespedes número de huéspedes; no puede superar la capacidad total
+     * @return la reservación creada y registrada en el hotel
+     * @throws RegistroNoEncontradoException si el huésped o alguna habitación no existe o está
+     *                                       dado de baja
+     * @throws ReservacionInvalidaException  si no se indica ninguna habitación, alguna no está
+     *                                       disponible, las fechas son inválidas o se excede
+     *                                       la capacidad
+     * @throws HotelException excepción base de las reglas del hotel
+     */
+    public Reservacion crearReservacion(String idHuesped, List<Integer> numerosHab, LocalDate ini, LocalDate fin,
+                                        int numHuespedes) throws HotelException {
         Huesped huesped = buscarHuesped(idHuesped);
-        String idReservacion = String.valueOf(reservaciones.size()+1);
-
-        // pendiente la validacion de la existencia de habitaciones.
-        List<Habitacion> habitacionesReserva = new ArrayList<>();
-        for (Habitacion existente : buscarDisponibles(ini, fin)) {
-            for (Integer numeroHabitacion: numerosHab) {
-                 if (existente.getNumero() == numeroHabitacion) {
-                     habitacionesReserva.add(existente);
-                 }
-                 numerosHab.remove(numeroHabitacion);
-                 break;
-            }
+        if (numerosHab == null || numerosHab.isEmpty()) {
+            throw new ReservacionInvalidaException("Debe seleccionar al menos una habitación.");
         }
 
-        reservaciones.add(new Reservacion(idReservacion,huesped,habitacionesReserva,ini,fin,numHuespedes));
+        List<Habitacion> habitacionesReserva = new ArrayList<>();
+        List<Integer> noDisponibles = new ArrayList<>();
+        for (Integer numero : numerosHab) {
+            Habitacion habitacion = buscarHabitacion(numero);
+            if (!estaDisponible(habitacion, ini, fin, null)) {
+                noDisponibles.add(numero);
+            } else if (!habitacionesReserva.contains(habitacion)) {
+                habitacionesReserva.add(habitacion);
+            }
+        }
+        if (!noDisponibles.isEmpty()) {
+            throw new ReservacionInvalidaException("Las habitaciones " + noDisponibles
+                    + " no están disponibles del " + ini + " al " + fin + ".");
+        }
+
+        String idReservacion = String.valueOf(reservaciones.size() + 1);
+        Reservacion reservacion = new Reservacion(idReservacion, huesped, habitacionesReserva, ini, fin, numHuespedes);
+        reservaciones.add(reservacion);
+        return reservacion;
     }
 
     /**
@@ -384,9 +394,7 @@ public class Hotel {
     public List<Habitacion> buscarDisponibles(LocalDate ini, LocalDate fin) {
         List<Habitacion> disponibles = new ArrayList<>();
         for (Habitacion habitacion : listarHabitaciones()) {
-            /*
-            Ahora como no revisare reservaciones, simplemente le paso null
-             */
+            // null: no se ignora ninguna reservación; todas cuentan para el traslape
             if (estaDisponible(habitacion, ini, fin, null)) {
                 disponibles.add(habitacion);
             }
@@ -692,7 +700,7 @@ public class Hotel {
      * recepcionista y la reservación; el estado lo valida {@code Reservacion} (RN-39).
      *
      * @param idRecepcionista id del recepcionista que realiza el check-in
-     * @param idRes           id de la reservación a la que se hace check-in
+     * @param idRes id de la reservación a la que se hace check-in
      * @throws RegistroNoEncontradoException si el recepcionista no existe o está dado de baja,
      *                                       o no existe la reservación
      * @throws ReservacionInvalidaException si la reservación no está ACTIVA o alguna habitación
@@ -714,7 +722,7 @@ public class Hotel {
      * el estado y el pago los valida {@code Reservacion} (RN-39).
      *
      * @param idRecepcionista id del recepcionista que realiza el check-out
-     * @param idRes           id de la reservación a la que se hace check-out
+     * @param idRes id de la reservación a la que se hace check-out
      * @throws RegistroNoEncontradoException si el recepcionista no existe o está dado de baja,
      *                                       o no existe la reservación
      * @throws ReservacionInvalidaException si la reservación no está EN_CURSO
@@ -727,8 +735,28 @@ public class Hotel {
         recepcionista.hacerCheckOut(reservacion);
     }
 
+    /**
+     * Registra el consumo de un servicio en una reservación (RF-12).
+     * <p>
+     * El consumo solo se acepta en una reservación EN_CURSO, sobre un servicio activo del
+     * catálogo y antes de que se genere la factura (RN-22, RN-46); esas validaciones las
+     * hace {@code Reservacion}. Hotel solo localiza la reservación y el servicio (RN-39). No
+     * se guarda ningún monto: el costo se calcula con {@code calcularCosto(cantidad)} del
+     * servicio al generar la factura (RN-19 a RN-21, RN-24).
+     *
+     * @param idRes          id de la reservación que consume
+     * @param codigoServicio código del servicio consumido
+     * @param cantidad       cantidad consumida (platillos, sesiones o prendas); debe ser positiva
+     * @throws RegistroNoEncontradoException si no existe la reservación o el servicio, o este
+     *                                       está dado de baja
+     * @throws ReservacionInvalidaException  si la reservación no está EN_CURSO o ya tiene factura
+     * @throws IllegalArgumentException      si la cantidad no es positiva
+     * @throws HotelException excepción base de las reglas del hotel
+     */
     public void registrarConsumo(String idRes, String codigoServicio, int cantidad) throws HotelException {
-        // pendiente
+        Reservacion reserva = buscarReservacion(idRes);
+        Servicio servicio = buscarServicio(codigoServicio);
+        reserva.agregarConsumo(servicio, cantidad);
     }
 
     /**
