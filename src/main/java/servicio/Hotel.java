@@ -9,8 +9,10 @@ import excepciones.ReservacionInvalidaException;
 import modelo.alojamiento.*;
 import modelo.catalogo.Servicio;
 import modelo.facturacion.Factura;
+import modelo.personas.Camarista;
 import modelo.personas.Empleado;
 import modelo.personas.Huesped;
+import modelo.personas.Mesero;
 import modelo.personas.Recepcionista;
 import modelo.personas.TipoHuesped;
 import modelo.reservas.ConsumoServicio;
@@ -256,6 +258,7 @@ public class Hotel {
         habitacionesReserva.removeIf(h -> h.getNumero() != numeroHabitacion);
         numerosHab.remove(numeroHabitacion);
  */
+
     public void crearReservacion(String idHuesped, List<Integer> numerosHab, LocalDate ini, LocalDate fin, int numHuespedes) throws HotelException {
         Huesped huesped = buscarHuesped(idHuesped);
         String idReservacion = String.valueOf(reservaciones.size()+1);
@@ -725,7 +728,7 @@ public class Hotel {
     }
 
     public void registrarConsumo(String idRes, String codigoServicio, int cantidad) throws HotelException {
-        //
+        // pendiente
     }
 
     /**
@@ -779,15 +782,105 @@ public class Hotel {
         factura.pagar();
     }
 
-    public void registrarLimpieza(String idCamarista, int numHabitacion) {
+    /**
+     * Registra la limpieza de una habitación (RF-14).
+     * <p>
+     * Lo realiza una camarista activa (RN-48). La habitación debe estar en LIMPIEZA y pasa
+     * a DISPONIBLE. Hotel solo localiza a la camarista y la habitación; el estado lo valida
+     * {@code Camarista}.
+     *
+     * @param idCamarista   id de la camarista que realiza la limpieza
+     * @param numHabitacion número de la habitación limpiada
+     * @throws RegistroNoEncontradoException si la camarista o la habitación no existen o están
+     *                                       dadas de baja
+     * @throws HotelException si el empleado no es camarista o la habitación no está en LIMPIEZA
+     */
+    public void registrarLimpieza(String idCamarista, int numHabitacion) throws HotelException {
+        Camarista camarista = buscarCamarista(idCamarista);
+        Habitacion habitacion = buscarHabitacion(numHabitacion);
+        camarista.registrarLimpieza(habitacion);
     }
 
-    public void registrarPropina(String idMesero, double monto) {
+    /**
+     * Registra una propina para un mesero (RF-15).
+     * <p>
+     * La propina se suma a las acumuladas del periodo (RN-49). El monto debe ser positivo;
+     * lo valida {@code Mesero}.
+     *
+     * @param idMesero id del mesero que recibe la propina
+     * @param monto    monto de la propina; debe ser positivo
+     * @throws RegistroNoEncontradoException si el mesero no existe o está dado de baja
+     * @throws HotelException si el empleado no es mesero o el monto no es positivo
+     */
+    public void registrarPropina(String idMesero, double monto) throws HotelException {
+        Mesero mesero = buscarMesero(idMesero);
+        mesero.registrarPropina(monto);
     }
 
+    /**
+     * Busca una camarista activa por su id (RN-48, RN-56).
+     *
+     * @param id id de la camarista que se busca
+     * @return la camarista activa con ese id
+     * @throws RegistroNoEncontradoException si no existe o está dada de baja
+     * @throws HotelException si el empleado existe pero no es camarista
+     */
+    private Camarista buscarCamarista(String id) throws HotelException {
+        Empleado empleado = buscarEmpleado(id);
+        if (!(empleado instanceof Camarista camarista)) {
+            throw new HotelException("El empleado " + id + " no es camarista.");
+        }
+        return camarista;
+    }
+
+    /**
+     * Busca un mesero activo por su id (RN-49, RN-56).
+     *
+     * @param id id del mesero que se busca
+     * @return el mesero activo con ese id
+     * @throws RegistroNoEncontradoException si no existe o está dado de baja
+     * @throws HotelException si el empleado existe pero no es mesero
+     */
+    private Mesero buscarMesero(String id) throws HotelException {
+        Empleado empleado = buscarEmpleado(id);
+        if (!(empleado instanceof Mesero mesero)) {
+            throw new HotelException("El empleado " + id + " no es mesero.");
+        }
+        return mesero;
+    }
+
+    /**
+     * Calcula la nómina total del periodo actual (RF-16).
+     * <p>
+     * Suma el sueldo de todos los empleados activos; cada rol calcula el suyo con
+     * polimorfismo (salario base, más bono el gerente, más propinas el mesero). Los
+     * empleados dados de baja no cuentan (RN-35). Solo consulta: no modifica a ningún
+     * empleado (RN-50).
+     *
+     * @return total de la nómina en pesos; 0 si no hay empleados activos
+     */
     public double calcularNomina() {
+        double total = 0;
+        for (Empleado empleado : listarEmpleados()) {
+            total += empleado.calcularSueldo();
+        }
+        return total;
     }
 
+    /**
+     * Cierra el periodo de nómina (RF-16).
+     * <p>
+     * Calcula primero la nómina del periodo y después reinicia los acumulados de cada
+     * empleado activo, por ejemplo las propinas de los meseros (RN-50). El orden importa:
+     * si se reiniciara antes de calcular, las propinas no se pagarían.
+     *
+     * @return total de la nómina pagada en el periodo que se cierra
+     */
     public double cerrarPeriodoNomina() {
+        double total = calcularNomina();
+        for (Empleado empleado : listarEmpleados()) {
+            empleado.cerrarPeriodo();
+        }
+        return total;
     }
 }
