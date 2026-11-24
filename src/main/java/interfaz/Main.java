@@ -1,6 +1,7 @@
 package interfaz;
 
 import excepciones.HotelException;
+import modelo.alojamiento.EstadoHabitacion;
 import modelo.alojamiento.Habitacion;
 import modelo.alojamiento.HabitacionDoble;
 import modelo.alojamiento.HabitacionSencilla;
@@ -59,6 +60,12 @@ public class Main {
                 case 9 -> listarServicios();
                 case 10 -> listarReservaciones();
                 case 11 -> buscarDisponibles();
+                case 12 -> actualizarTipoHuesped();
+                case 13 -> actualizarSalarioEmpleado();
+                case 14 -> actualizarEstadoHabitacion();
+                case 15 -> actualizarTarifaHabitacion();
+                case 16 -> actualizarPrecioServicio();
+                case 17 -> modificarFechasReservacion();
                 case 18 -> darDeBajaHuesped();
                 case 19 -> darDeBajaEmpleado();
                 case 20 -> darDeBajaHabitacion();
@@ -249,6 +256,63 @@ public class Main {
             System.out.printf("#%d | %s | piso %d | capacidad %d | tarifa $%.2f%n", h.getNumero(),
                     h.getClass().getSimpleName(), h.getPiso(), h.getCapacidad(), h.getTarifaBase());
         }
+    }
+
+    // ------------------------------------------------------- ACTUALIZACIONES
+
+    private static void actualizarTipoHuesped() throws HotelException {
+        System.out.println("\n-- Actualizar tipo de huésped --");
+        String id = menu.leerTexto("Id del huésped: ");
+        int t = menu.leerEnteroEnRango("Nuevo tipo (1. Regular, 2. VIP): ", 1, 2);
+        hotel.actualizarTipoHuesped(id, t == 1 ? TipoHuesped.REGULAR : TipoHuesped.VIP);
+        System.out.println("Tipo de huésped actualizado.");
+    }
+
+    private static void actualizarSalarioEmpleado() throws HotelException {
+        System.out.println("\n-- Actualizar salario de empleado --");
+        String id = menu.leerTexto("Id del empleado: ");
+        double salario = menu.leerDecimal("Nuevo salario base: ");
+        hotel.actualizarSalarioEmpleado(id, salario);
+        System.out.println("Salario actualizado.");
+    }
+
+    private static void actualizarEstadoHabitacion() throws HotelException {
+        System.out.println("\n-- Actualizar estado de habitación --");
+        int numero = menu.leerEntero("Número de habitación: ");
+        // OCUPADA no se ofrece: solo la asigna el check-in (RN-42).
+        int e = menu.leerEnteroEnRango("Nuevo estado (1. Disponible, 2. Limpieza, 3. Mantenimiento): ", 1, 3);
+        EstadoHabitacion estado = switch (e) {
+            case 1 -> EstadoHabitacion.DISPONIBLE;
+            case 2 -> EstadoHabitacion.LIMPIEZA;
+            default -> EstadoHabitacion.MANTENIMIENTO;
+        };
+        hotel.actualizarEstadoHabitacion(numero, estado);
+        System.out.println("Estado de la habitación actualizado.");
+    }
+
+    private static void actualizarTarifaHabitacion() throws HotelException {
+        System.out.println("\n-- Actualizar tarifa de habitación --");
+        int numero = menu.leerEntero("Número de habitación: ");
+        double tarifa = menu.leerDecimal("Nueva tarifa base por noche: ");
+        hotel.actualizarTarifaHabitacion(numero, tarifa);
+        System.out.println("Tarifa actualizada.");
+    }
+
+    private static void actualizarPrecioServicio() throws HotelException {
+        System.out.println("\n-- Actualizar precio de servicio --");
+        String codigo = menu.leerTexto("Código del servicio: ");
+        double precio = menu.leerDecimal("Nuevo precio base: ");
+        hotel.actualizarPrecioServicio(codigo, precio);
+        System.out.println("Precio actualizado.");
+    }
+
+    private static void modificarFechasReservacion() throws HotelException {
+        System.out.println("\n-- Modificar fechas de reservación --");
+        String id = menu.leerTexto("Id de la reservación: ");
+        LocalDate ini = menu.leerFecha("Nueva fecha de entrada (AAAA-MM-DD): ");
+        LocalDate fin = menu.leerFecha("Nueva fecha de salida (AAAA-MM-DD): ");
+        hotel.modificarFechasReservacion(id, ini, fin);
+        System.out.println("Fechas de la reservación actualizadas.");
     }
 
     // ---------------------------------------------------------------- BAJAS
