@@ -247,11 +247,11 @@ public class Hotel {
      * capacidad (RN-05) las valida {@code Reservacion}. Se permiten fechas anteriores a hoy
      * (RN-41). El id lo genera el sistema.
      *
-     * @param idHuesped   id del huésped que reserva
-     * @param numerosHab  números de las habitaciones que se reservan; al menos una
-     * @param ini         fecha de entrada
-     * @param fin         fecha de salida
-     * @param numHuespedes número de huéspedes; no puede superar la capacidad total
+     * @param idHuesped     id del huésped que reserva
+     * @param numerosHab    números de las habitaciones que se reservan; al menos una
+     * @param ini           fecha de entrada
+     * @param fin           fecha de salida
+     * @param numHuespedes  número de huéspedes; no puede superar la capacidad total
      * @return la reservación creada y registrada en el hotel
      * @throws RegistroNoEncontradoException si el huésped o alguna habitación no existe o está
      *                                       dado de baja
@@ -444,7 +444,7 @@ public class Hotel {
      * @param num número de la habitación que se actualiza
      * @param e   nuevo estado de la habitación
      * @throws RegistroNoEncontradoException si no existe o está dada de baja
-     * @throws HotelException cambiar el estado de una habitación OCUPADA (RN-42)
+     * @throws HotelException si se intenta asignar OCUPADA o cambiar el estado de una habitación OCUPADA (RN-42)
      */
     public void actualizarEstadoHabitacion(int num, EstadoHabitacion e) throws HotelException {
         Habitacion habitacion = buscarHabitacion(num);

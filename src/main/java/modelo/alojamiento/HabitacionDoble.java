@@ -1,7 +1,7 @@
 package modelo.alojamiento;
 
 /** Habitación doble: suma un cargo por noche por cada cama adicional a la primera. */
-// HERENCIA: HabitacionDoble extiende de Habitacion
+// HERENCIA: HabitacionDoble hereda de Habitacion
 public class HabitacionDoble extends Habitacion {
     // CONSTANTE: cargo por noche por cada cama adicional a la primera (RN-17)
     public static final double CARGO_CAMA_EXTRA = 300.00;
@@ -25,7 +25,7 @@ public class HabitacionDoble extends Habitacion {
     }
 
     /** {@inheritDoc} Fórmula: {@code (tarifaBase + CARGO_CAMA_EXTRA × (numCamas - 1)) × noches} (RN-17). */
-    // POLIMORFISMO: sobreescritura de calcularTarifa(), suma el cargo de camas extra
+    // POLIMORFISMO: sobrescritura de calcularTarifa(), suma el cargo de camas extra
     @Override
     public double calcularTarifa(int noches) {
         return (tarifaBase + CARGO_CAMA_EXTRA * (numCamas - 1)) * noches;

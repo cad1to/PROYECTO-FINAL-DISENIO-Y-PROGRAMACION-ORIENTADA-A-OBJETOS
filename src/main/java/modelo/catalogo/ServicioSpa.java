@@ -1,7 +1,7 @@
 package modelo.catalogo;
 
 /** Servicio de spa: cobra un precio fijo por sesión, sin importar su duración. */
-// HERENCIA: ServicioSpa extiende de Servicio
+// HERENCIA: ServicioSpa hereda de Servicio
 public class ServicioSpa extends Servicio {
 
     /**
@@ -16,7 +16,7 @@ public class ServicioSpa extends Servicio {
     }
 
     /** {@inheritDoc} Fórmula: {@code precioBase × sesiones} (RN-20). */
-    // POLIMORFISMO: sobreescritura de calcularCosto()
+    // POLIMORFISMO: sobrescritura de calcularCosto()
     @Override
     public double calcularCosto(int sesiones) {
         validarCantidad(sesiones);

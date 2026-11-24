@@ -1,7 +1,7 @@
 package modelo.alojamiento;
 
 /** Suite: suma un cargo fijo por noche, propio de cada suite, a la tarifa base. */
-// HERENCIA: Suite extiende de Habitacion
+// HERENCIA: Suite hereda de Habitacion
 public class Suite extends Habitacion {
     protected double cargoExtra;
 
@@ -22,7 +22,7 @@ public class Suite extends Habitacion {
     }
 
     /** {@inheritDoc} Fórmula: {@code (tarifaBase + cargoExtra) × noches} (RN-18). */
-    // POLIMORFISMO: sobreescritura de calcularTarifa(), suma el cargo extra de la suite
+    // POLIMORFISMO: sobrescritura de calcularTarifa(), suma el cargo extra de la suite
     @Override
     public double calcularTarifa(int noches) {
         return (tarifaBase + cargoExtra) * noches;

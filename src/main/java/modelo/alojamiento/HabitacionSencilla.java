@@ -1,7 +1,7 @@
 package modelo.alojamiento;
 
 /** Habitación sencilla: cobra solo la tarifa base por noche. */
-// HERENCIA: HabitacionSencilla extiende de Habitacion
+// HERENCIA: HabitacionSencilla hereda de Habitacion
 public class HabitacionSencilla extends Habitacion {
 
     /**
@@ -17,7 +17,7 @@ public class HabitacionSencilla extends Habitacion {
     }
 
     /** {@inheritDoc} Fórmula: {@code tarifaBase × noches} (RN-16). */
-    // POLIMORFISMO: sobreescritura de calcularTarifa()
+    // POLIMORFISMO: sobrescritura de calcularTarifa()
     @Override
     public double calcularTarifa(int noches) {
         return tarifaBase * noches;
