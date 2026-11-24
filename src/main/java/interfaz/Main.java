@@ -10,6 +10,8 @@ import modelo.catalogo.Servicio;
 import modelo.catalogo.ServicioLavanderia;
 import modelo.catalogo.ServicioRestaurante;
 import modelo.catalogo.ServicioSpa;
+import modelo.facturacion.DetalleFactura;
+import modelo.facturacion.Factura;
 import modelo.personas.Camarista;
 import modelo.personas.Empleado;
 import modelo.personas.Gerente;
@@ -66,6 +68,11 @@ public class Main {
                 case 15 -> actualizarTarifaHabitacion();
                 case 16 -> actualizarPrecioServicio();
                 case 17 -> modificarFechasReservacion();
+                case 23 -> realizarCheckIn();
+                case 24 -> realizarCheckOut();
+                case 25 -> registrarConsumo();
+                case 26 -> generarFactura();
+                case 27 -> pagarFactura();
                 case 18 -> darDeBajaHuesped();
                 case 19 -> darDeBajaEmpleado();
                 case 20 -> darDeBajaHabitacion();
@@ -313,6 +320,54 @@ public class Main {
         LocalDate fin = menu.leerFecha("Nueva fecha de salida (AAAA-MM-DD): ");
         hotel.modificarFechasReservacion(id, ini, fin);
         System.out.println("Fechas de la reservación actualizadas.");
+    }
+
+    // ------------------------------------------------ OPERACIÓN Y FACTURACIÓN
+
+    private static void realizarCheckIn() throws HotelException {
+        System.out.println("\n-- Check-in --");
+        String idRecepcionista = menu.leerTexto("Id del recepcionista: ");
+        String idReservacion = menu.leerTexto("Id de la reservación: ");
+        hotel.realizarCheckIn(idRecepcionista, idReservacion);
+        System.out.println("Check-in realizado.");
+    }
+
+    private static void realizarCheckOut() throws HotelException {
+        System.out.println("\n-- Check-out --");
+        String idRecepcionista = menu.leerTexto("Id del recepcionista: ");
+        String idReservacion = menu.leerTexto("Id de la reservación: ");
+        hotel.realizarCheckOut(idRecepcionista, idReservacion);
+        System.out.println("Check-out realizado.");
+    }
+
+    private static void registrarConsumo() throws HotelException {
+        System.out.println("\n-- Registrar consumo de servicio --");
+        String idReservacion = menu.leerTexto("Id de la reservación: ");
+        String codigo = menu.leerTexto("Código del servicio: ");
+        int cantidad = menu.leerEntero("Cantidad: ");
+        hotel.registrarConsumo(idReservacion, codigo, cantidad);
+        System.out.println("Consumo registrado.");
+    }
+
+    private static void generarFactura() throws HotelException {
+        System.out.println("\n-- Generar factura --");
+        Factura f = hotel.generarFactura(menu.leerTexto("Id de la reservación: "));
+
+        System.out.println("Factura " + f.getFolio() + " | emisión " + f.getFechaEmision());
+        for (DetalleFactura d : f.getDetalles()) {
+            System.out.printf("  %-35s x%d  $%.2f%n", d.getConcepto(), d.getCantidad(), d.getMonto());
+        }
+        System.out.printf("Subtotal:  $%.2f%n", f.calcularSubtotal());
+        System.out.printf("Descuento: %.0f%%%n", f.getDescuento() * 100);
+        System.out.printf("IVA:       %.0f%%%n", Factura.IMPUESTO * 100);
+        System.out.printf("TOTAL:     $%.2f%n", f.calcularTotal());
+        System.out.println("Estado: " + (f.isPagada() ? "pagada" : "pendiente de pago"));
+    }
+
+    private static void pagarFactura() throws HotelException {
+        System.out.println("\n-- Pagar factura --");
+        hotel.pagarFactura(menu.leerTexto("Id de la reservación: "));
+        System.out.println("Factura pagada.");
     }
 
     // ---------------------------------------------------------------- BAJAS
