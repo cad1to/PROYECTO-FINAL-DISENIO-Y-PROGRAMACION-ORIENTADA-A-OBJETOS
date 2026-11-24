@@ -20,6 +20,7 @@ import modelo.reservas.Reservacion;
 import servicio.Hotel;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /** Programa ejecutable: ciclo del menú y ejecución de cada opción sobre el {@link Hotel}. */
@@ -52,6 +53,11 @@ public class Main {
                 case 3 -> registrarHabitacion();
                 case 4 -> registrarServicio();
                 case 5 -> crearReservacion();
+                case 18 -> darDeBajaHuesped();
+                case 19 -> darDeBajaEmpleado();
+                case 20 -> darDeBajaHabitacion();
+                case 21 -> darDeBajaServicio();
+                case 22 -> cancelarReservacion();
                 default -> System.out.println("Opción " + opcion + " aún no implementada.");
             }
         } catch (HotelException | IllegalArgumentException e) {
@@ -157,5 +163,45 @@ public class Main {
 
         Reservacion r = hotel.crearReservacion(idHuesped, habitaciones, entrada, salida, huespedes);
         System.out.println("Reservación creada con id " + r.getId() + ".");
+    }
+
+    // ---------------------------------------------------------------- BAJAS
+
+    private static void darDeBajaHuesped() throws HotelException {
+        System.out.println("\n-- Dar de baja huésped --");
+        hotel.darDeBajaHuesped(menu.leerTexto("Id del huésped: "));
+        System.out.println("Huésped dado de baja.");
+    }
+
+    private static void darDeBajaEmpleado() throws HotelException {
+        System.out.println("\n-- Dar de baja empleado --");
+        hotel.darDeBajaEmpleado(menu.leerTexto("Id del empleado: "));
+        System.out.println("Empleado dado de baja.");
+    }
+
+    private static void darDeBajaHabitacion() throws HotelException {
+        System.out.println("\n-- Dar de baja habitación --");
+        hotel.darDeBajaHabitacion(menu.leerEntero("Número de habitación: "));
+        System.out.println("Habitación dada de baja.");
+    }
+
+    private static void darDeBajaServicio() throws HotelException {
+        System.out.println("\n-- Dar de baja servicio --");
+        hotel.darDeBajaServicio(menu.leerTexto("Código del servicio: "));
+        System.out.println("Servicio dado de baja.");
+    }
+
+    private static void cancelarReservacion() throws HotelException {
+        System.out.println("\n-- Cancelar reservación --");
+        String id = menu.leerTexto("Id de la reservación: ");
+        hotel.cancelarReservacion(id, LocalDateTime.now());
+
+        double cargo = hotel.listarReservaciones().stream()
+                .filter(r -> r.getId().equals(id))
+                .findFirst()
+                .map(Reservacion::getCargoCancelacion)
+                .orElse(0.0);
+        System.out.println("Reservación cancelada."
+                + (cargo > 0 ? " Cargo por cancelación tardía: $" + String.format("%.2f", cargo) : ""));
     }
 }
