@@ -73,6 +73,10 @@ public class Main {
                 case 25 -> registrarConsumo();
                 case 26 -> generarFactura();
                 case 27 -> pagarFactura();
+                case 28 -> calcularNomina();
+                case 29 -> registrarLimpieza();
+                case 30 -> registrarPropina();
+                case 31 -> cerrarPeriodoNomina();
                 case 18 -> darDeBajaHuesped();
                 case 19 -> darDeBajaEmpleado();
                 case 20 -> darDeBajaHabitacion();
@@ -368,6 +372,43 @@ public class Main {
         System.out.println("\n-- Pagar factura --");
         hotel.pagarFactura(menu.leerTexto("Id de la reservación: "));
         System.out.println("Factura pagada.");
+    }
+
+    // ----------------------------------------------------- PERSONAL Y NÓMINA
+
+    private static void calcularNomina() {
+        System.out.println("\n-- Nómina del periodo --");
+        List<Empleado> empleados = hotel.listarEmpleados();
+        if (empleados.isEmpty()) {
+            System.out.println("No hay empleados activos.");
+        }
+        for (Empleado e : empleados) {
+            System.out.printf("%s | %s | %s | sueldo $%.2f%n", e.getId(), e.getNombreCompleto(),
+                    e.getClass().getSimpleName(), e.calcularSueldo());
+        }
+        System.out.printf("TOTAL NÓMINA: $%.2f%n", hotel.calcularNomina());
+    }
+
+    private static void registrarLimpieza() throws HotelException {
+        System.out.println("\n-- Registrar limpieza de habitación --");
+        String idCamarista = menu.leerTexto("Id de la camarista: ");
+        int numero = menu.leerEntero("Número de habitación limpiada: ");
+        hotel.registrarLimpieza(idCamarista, numero);
+        System.out.println("Limpieza registrada; la habitación quedó disponible.");
+    }
+
+    private static void registrarPropina() throws HotelException {
+        System.out.println("\n-- Registrar propina de mesero --");
+        String idMesero = menu.leerTexto("Id del mesero: ");
+        double monto = menu.leerDecimal("Monto de la propina: ");
+        hotel.registrarPropina(idMesero, monto);
+        System.out.println("Propina registrada.");
+    }
+
+    private static void cerrarPeriodoNomina() {
+        System.out.println("\n-- Cerrar periodo de nómina --");
+        double total = hotel.cerrarPeriodoNomina();
+        System.out.printf("Periodo cerrado. Nómina pagada: $%.2f%n", total);
     }
 
     // ---------------------------------------------------------------- BAJAS
