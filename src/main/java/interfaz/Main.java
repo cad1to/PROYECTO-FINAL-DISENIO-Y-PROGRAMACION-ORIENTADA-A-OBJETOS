@@ -1,10 +1,161 @@
 package interfaz;
 
+import excepciones.HotelException;
+import modelo.alojamiento.Habitacion;
+import modelo.alojamiento.HabitacionDoble;
+import modelo.alojamiento.HabitacionSencilla;
+import modelo.alojamiento.Suite;
+import modelo.catalogo.Servicio;
+import modelo.catalogo.ServicioLavanderia;
+import modelo.catalogo.ServicioRestaurante;
+import modelo.catalogo.ServicioSpa;
+import modelo.personas.Camarista;
+import modelo.personas.Empleado;
+import modelo.personas.Gerente;
+import modelo.personas.Huesped;
+import modelo.personas.Mesero;
+import modelo.personas.Recepcionista;
+import modelo.personas.TipoHuesped;
+import modelo.reservas.Reservacion;
 import servicio.Hotel;
 
+import java.time.LocalDate;
+import java.util.List;
+
+/** Programa ejecutable: ciclo del menú y ejecución de cada opción sobre el {@link Hotel}. */
 public class Main {
+    private static final Hotel hotel = new Hotel("Hotel", "Coatzacoalcos, Veracruz");
+    private static final MenuConsola menu = new MenuConsola();
+
     public static void main(String[] args) {
-        Hotel hotel = new Hotel("Hotel", "Coatzacoalcos, Veracruz");
-        new MenuConsola(hotel).iniciar();
+        int opcion;
+        do {
+            menu.mostrarMenu();
+            opcion = menu.leerOpcion();
+            if (opcion > 31 || opcion < -1) {
+                System.out.println("Opción no válida.");
+            } else if (opcion == -1) {
+                System.out.println("Escribe un número.");
+            } else if (opcion > 0) {
+                ejecutar(opcion);
+            }
+        } while (opcion != 0);
+        System.out.println("Hasta luego.");
+    }
+
+    /** Ejecuta la opción elegida; los errores del hotel o de validación se muestran al usuario. */
+    private static void ejecutar(int opcion) {
+        try {
+            switch (opcion) {
+                case 1 -> registrarHuesped();
+                case 2 -> registrarEmpleado();
+                case 3 -> registrarHabitacion();
+                case 4 -> registrarServicio();
+                case 5 -> crearReservacion();
+                default -> System.out.println("Opción " + opcion + " aún no implementada.");
+            }
+        } catch (HotelException | IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    // ---------------------------------------------------------------- ALTAS
+
+    private static void registrarHuesped() throws HotelException {
+        System.out.println("\n-- Registrar huésped --");
+        String id = menu.leerTexto("Id: ");
+        String nombre = menu.leerTexto("Nombre: ");
+        String apellido = menu.leerTexto("Apellido: ");
+        String telefono = menu.leerTexto("Teléfono: ");
+        String correo = menu.leerTexto("Correo: ");
+        int t = menu.leerEnteroEnRango("Tipo (1. Regular, 2. VIP): ", 1, 2);
+        TipoHuesped tipo = (t == 1) ? TipoHuesped.REGULAR : TipoHuesped.VIP;
+
+        hotel.registrarHuesped(new Huesped(id, nombre, apellido, telefono, correo, tipo));
+        System.out.println("Huésped registrado.");
+    }
+
+    private static void registrarEmpleado() throws HotelException {
+        System.out.println("\n-- Registrar empleado --");
+        int t = menu.leerEnteroEnRango("Puesto (1. Recepcionista, 2. Mesero, 3. Camarista, 4. Gerente): ", 1, 4);
+        String id = menu.leerTexto("Id: ");
+        String nombre = menu.leerTexto("Nombre: ");
+        String apellido = menu.leerTexto("Apellido: ");
+        String telefono = menu.leerTexto("Teléfono: ");
+        String correo = menu.leerTexto("Correo: ");
+        double salario = menu.leerDecimal("Salario base: ");
+        LocalDate ingreso = menu.leerFecha("Fecha de ingreso (AAAA-MM-DD): ");
+
+        Empleado empleado;
+        switch (t) {
+            case 1 -> {
+                String turno = menu.leerTexto("Turno (ej. Matutino): ");
+                empleado = new Recepcionista(id, nombre, apellido, telefono, correo, salario, ingreso, turno);
+            }
+            case 2 -> empleado = new Mesero(id, nombre, apellido, telefono, correo, salario, ingreso);
+            case 3 -> empleado = new Camarista(id, nombre, apellido, telefono, correo, salario, ingreso);
+            default -> {
+                double bono = menu.leerDecimal("Bono mensual: ");
+                empleado = new Gerente(id, nombre, apellido, telefono, correo, salario, ingreso, bono);
+            }
+        }
+        hotel.registrarEmpleado(empleado);
+        System.out.println("Empleado registrado.");
+    }
+
+    private static void registrarHabitacion() throws HotelException {
+        System.out.println("\n-- Registrar habitación --");
+        int t = menu.leerEnteroEnRango("Tipo (1. Sencilla, 2. Doble, 3. Suite): ", 1, 3);
+        int numero = menu.leerEntero("Número: ");
+        int piso = menu.leerEntero("Piso: ");
+        int capacidad = menu.leerEntero("Capacidad (personas): ");
+        double tarifa = menu.leerDecimal("Tarifa base por noche: ");
+
+        Habitacion habitacion;
+        switch (t) {
+            case 1 -> habitacion = new HabitacionSencilla(numero, piso, capacidad, tarifa);
+            case 2 -> {
+                int camas = menu.leerEntero("Número de camas: ");
+                habitacion = new HabitacionDoble(numero, piso, capacidad, tarifa, camas);
+            }
+            default -> {
+                double cargo = menu.leerDecimal("Cargo extra de la suite: ");
+                habitacion = new Suite(numero, piso, capacidad, tarifa, cargo);
+            }
+        }
+        hotel.registrarHabitacion(habitacion);
+        System.out.println("Habitación registrada.");
+    }
+
+    private static void registrarServicio() throws HotelException {
+        System.out.println("\n-- Registrar servicio --");
+        int t = menu.leerEnteroEnRango("Categoría (1. Restaurante, 2. Spa, 3. Lavandería): ", 1, 3);
+        String codigo = menu.leerTexto("Código: ");
+        String nombre = menu.leerTexto("Nombre: ");
+        double precio = menu.leerDecimal("Precio base: ");
+
+        Servicio servicio;
+        switch (t) {
+            case 1 -> servicio = new ServicioRestaurante(codigo, nombre, precio);
+            case 2 -> servicio = new ServicioSpa(codigo, nombre, precio);
+            default -> {
+                boolean expres = menu.leerSiNo("¿Es servicio exprés? (s/n): ");
+                servicio = new ServicioLavanderia(codigo, nombre, precio, expres);
+            }
+        }
+        hotel.registrarServicio(servicio);
+        System.out.println("Servicio registrado.");
+    }
+
+    private static void crearReservacion() throws HotelException {
+        System.out.println("\n-- Crear reservación --");
+        String idHuesped = menu.leerTexto("Id del huésped: ");
+        List<Integer> habitaciones = menu.leerListaEnteros("Números de habitación (separados por coma): ");
+        LocalDate entrada = menu.leerFecha("Fecha de entrada (AAAA-MM-DD): ");
+        LocalDate salida = menu.leerFecha("Fecha de salida (AAAA-MM-DD): ");
+        int huespedes = menu.leerEntero("Número de huéspedes: ");
+
+        Reservacion r = hotel.crearReservacion(idHuesped, habitaciones, entrada, salida, huespedes);
+        System.out.println("Reservación creada con id " + r.getId() + ".");
     }
 }
