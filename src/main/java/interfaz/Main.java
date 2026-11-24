@@ -53,6 +53,12 @@ public class Main {
                 case 3 -> registrarHabitacion();
                 case 4 -> registrarServicio();
                 case 5 -> crearReservacion();
+                case 6 -> listarHuespedes();
+                case 7 -> listarEmpleados();
+                case 8 -> listarHabitaciones();
+                case 9 -> listarServicios();
+                case 10 -> listarReservaciones();
+                case 11 -> buscarDisponibles();
                 case 18 -> darDeBajaHuesped();
                 case 19 -> darDeBajaEmpleado();
                 case 20 -> darDeBajaHabitacion();
@@ -163,6 +169,86 @@ public class Main {
 
         Reservacion r = hotel.crearReservacion(idHuesped, habitaciones, entrada, salida, huespedes);
         System.out.println("Reservación creada con id " + r.getId() + ".");
+    }
+
+    // ------------------------------------------------------------ CONSULTAS
+
+    private static void listarHuespedes() {
+        System.out.println("\n-- Huéspedes --");
+        List<Huesped> lista = hotel.listarHuespedes();
+        if (lista.isEmpty()) {
+            System.out.println("No hay huéspedes registrados.");
+        }
+        for (Huesped h : lista) {
+            System.out.printf("%s | %s | %s | tel. %s | %s%n", h.getId(), h.getNombreCompleto(),
+                    h.getTipo(), h.getTelefono(), h.getCorreo());
+        }
+    }
+
+    private static void listarEmpleados() {
+        System.out.println("\n-- Empleados --");
+        List<Empleado> lista = hotel.listarEmpleados();
+        if (lista.isEmpty()) {
+            System.out.println("No hay empleados registrados.");
+        }
+        for (Empleado e : lista) {
+            System.out.printf("%s | %s | %s | salario $%.2f | ingreso %s%n", e.getId(),
+                    e.getNombreCompleto(), e.getClass().getSimpleName(), e.getSalarioBase(),
+                    e.getFechaIngreso());
+        }
+    }
+
+    private static void listarHabitaciones() {
+        System.out.println("\n-- Habitaciones --");
+        List<Habitacion> lista = hotel.listarHabitaciones();
+        if (lista.isEmpty()) {
+            System.out.println("No hay habitaciones registradas.");
+        }
+        for (Habitacion h : lista) {
+            System.out.printf("#%d | %s | piso %d | capacidad %d | tarifa $%.2f | %s%n", h.getNumero(),
+                    h.getClass().getSimpleName(), h.getPiso(), h.getCapacidad(), h.getTarifaBase(),
+                    h.getEstado());
+        }
+    }
+
+    private static void listarServicios() {
+        System.out.println("\n-- Servicios --");
+        List<Servicio> lista = hotel.listarServicios();
+        if (lista.isEmpty()) {
+            System.out.println("No hay servicios registrados.");
+        }
+        for (Servicio s : lista) {
+            System.out.printf("%s | %s | %s | precio base $%.2f%n", s.getCodigo(), s.getNombre(),
+                    s.getCategoria(), s.getPrecioBase());
+        }
+    }
+
+    private static void listarReservaciones() {
+        System.out.println("\n-- Reservaciones --");
+        List<Reservacion> lista = hotel.listarReservaciones();
+        if (lista.isEmpty()) {
+            System.out.println("No hay reservaciones registradas.");
+        }
+        for (Reservacion r : lista) {
+            List<Integer> numeros = r.getHabitaciones().stream().map(Habitacion::getNumero).toList();
+            System.out.printf("%s | %s | hab. %s | %s a %s | %d huésped(es) | %s%n", r.getId(),
+                    r.getHuesped().getNombreCompleto(), numeros, r.getFechaEntrada(),
+                    r.getFechaSalida(), r.getNumHuespedes(), r.getEstado());
+        }
+    }
+
+    private static void buscarDisponibles() {
+        System.out.println("\n-- Habitaciones disponibles --");
+        LocalDate ini = menu.leerFecha("Fecha de entrada (AAAA-MM-DD): ");
+        LocalDate fin = menu.leerFecha("Fecha de salida (AAAA-MM-DD): ");
+        List<Habitacion> lista = hotel.buscarDisponibles(ini, fin);
+        if (lista.isEmpty()) {
+            System.out.println("No hay habitaciones disponibles en ese periodo.");
+        }
+        for (Habitacion h : lista) {
+            System.out.printf("#%d | %s | piso %d | capacidad %d | tarifa $%.2f%n", h.getNumero(),
+                    h.getClass().getSimpleName(), h.getPiso(), h.getCapacidad(), h.getTarifaBase());
+        }
     }
 
     // ---------------------------------------------------------------- BAJAS
