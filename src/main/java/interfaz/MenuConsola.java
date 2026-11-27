@@ -77,7 +77,8 @@ public class MenuConsola {
         }
     }
 
-    /** Lee una línea de texto; repite hasta que no esté vacía. */
+    // ========================================================== Validaciones
+
     public String leerTexto(String mensaje) {
         while (true) {
             System.out.print(mensaje);

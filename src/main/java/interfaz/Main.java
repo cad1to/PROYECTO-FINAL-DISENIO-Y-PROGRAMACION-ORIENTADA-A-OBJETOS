@@ -85,6 +85,8 @@ public class Main {
                 default -> System.out.println("Opción " + opcion + " aún no implementada.");
             }
         } catch (HotelException | IllegalArgumentException e) {
+            //Donde atrapamos todos los tipos de excepcioes al ejecutar cualquier opcion.
+
             System.out.println("Error: " + e.getMessage());
         }
     }
@@ -106,6 +108,18 @@ public class Main {
     }
 
     private static void registrarEmpleado() throws HotelException {
+        /*
+         ==================== Herencia ====================
+         La herencia nos permite reutilizar código al máximo. ¿Cómo lo logramos al registrar
+         un empleado?
+
+         Un Empleado es una Persona, así que la clase Empleado hereda atributos y métodos de
+         Persona (id, nombre, apellido, teléfono, correo y baja lógica), y los distintos puestos
+         (camarista, gerente, mesero o recepcionista) los heredan de Empleado.
+
+         Esto nos permite pedir una sola vez los datos comunes y, según el puesto elegido, pedir
+         solo sus datos propios (turno o bono), sin repetir código.
+         */
         System.out.println("\n-- Registrar empleado --");
         int t = menu.leerEnteroEnRango("Puesto (1. Recepcionista, 2. Mesero, 3. Camarista, 4. Gerente): ", 1, 4);
         String id = menu.leerTexto("Id: ");
@@ -115,7 +129,6 @@ public class Main {
         String correo = menu.leerTexto("Correo: ");
         double salario = menu.leerDecimal("Salario base: ");
         LocalDate ingreso = menu.leerFecha("Fecha de ingreso (AAAA-MM-DD): ");
-
         Empleado empleado;
         switch (t) {
             case 1 -> {

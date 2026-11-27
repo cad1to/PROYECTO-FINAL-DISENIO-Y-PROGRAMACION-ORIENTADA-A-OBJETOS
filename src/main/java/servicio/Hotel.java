@@ -24,6 +24,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Hotel {
+    /*
+      ================== Encapsulamiento ===============
+      ¿Porque no private?
+
+      Debi al acutal proyecto no tiene ningun sentido tenerlo como protected debido a que es la
+      unica clase dentro de nuestro package Servicio. Pero pensando algo en el futuro, la posinilidad
+      de servicios independientes donde requieran los mismos empleados o los mismos huesped, como un
+      Administrador de Rentas de Casas, no sea necesario pasarlos por getters y sea de forma directa.
+     */
     protected String nombre;
     protected String direccion;
     protected List<Habitacion> habitaciones;
@@ -374,7 +383,6 @@ public class Hotel {
      * @return lista con todas las reservaciones; vacía si no hay ninguna
      */
     public List<Reservacion> listarReservaciones() {
-        // El constructor de ArrayList copia toda la lista, no es necesario recorrerla con for
         return new ArrayList<>(reservaciones);
     }
 
