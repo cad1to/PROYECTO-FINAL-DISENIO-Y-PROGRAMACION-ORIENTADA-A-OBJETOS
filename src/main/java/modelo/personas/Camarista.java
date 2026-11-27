@@ -55,6 +55,4 @@ public class Camarista extends Empleado {
     public String getPuesto() {
         return "Camarista";
     }
-
-    //creo que no se hizo el push anterior
 }

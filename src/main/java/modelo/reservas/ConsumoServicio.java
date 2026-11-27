@@ -5,27 +5,20 @@ import modelo.catalogo.Servicio;
 import java.time.LocalDate;
 
 /**
- * Servicio del catálogo consumido dentro de una reservación.
- * <p>
- * Forma parte de la reservación por composición: no existe fuera de ella (RN-23).
- * Conserva la referencia al servicio aunque este se dé de baja después (RN-38).
- * </p>
+ * Consumo de un servicio registrado durante la estancia de una reservación.
  */
 public class ConsumoServicio {
-    /** Cantidad consumida (platillos, sesiones o prendas, según el servicio). */
     protected int cantidad;
-    /** Fecha en la que se registró el consumo. */
     protected LocalDate fecha;
-    /** Servicio del catálogo que se consumió. */
     protected Servicio servicio;
 
     /**
-     * Crea un consumo de servicio.
+     * Crea un consumo.
      *
      * @param servicio servicio consumido; no puede ser nulo
-     * @param cantidad cantidad consumida; debe ser positiva
+     * @param cantidad cantidad consumida (platillos, sesiones o prendas); debe ser positiva
      * @param fecha    fecha del consumo; no puede ser nula
-     * @throws IllegalArgumentException si algún dato es inválido (RN-53)
+     * @throws IllegalArgumentException si algún dato es nulo o la cantidad no es positiva
      */
     public ConsumoServicio(Servicio servicio, int cantidad, LocalDate fecha) {
         if (servicio == null) {
@@ -43,12 +36,17 @@ public class ConsumoServicio {
     }
 
     /**
-     * Calcula el subtotal del consumo con la regla de costo del servicio (RN-19 a RN-21).
+     * Calcula el costo de este consumo con las reglas de su servicio.
      *
-     * @return {@code servicio.calcularCosto(cantidad)}
+     * @return subtotal del consumo en pesos
      */
     public double calcularSubtotal() {
         return servicio.calcularCosto(cantidad);
+    }
+
+    /** @return servicio consumido */
+    public Servicio getServicio() {
+        return servicio;
     }
 
     /** @return cantidad consumida */
@@ -59,10 +57,5 @@ public class ConsumoServicio {
     /** @return fecha del consumo */
     public LocalDate getFecha() {
         return fecha;
-    }
-
-    /** @return servicio consumido */
-    public Servicio getServicio() {
-        return servicio;
     }
 }

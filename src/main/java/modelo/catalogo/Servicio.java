@@ -46,7 +46,7 @@ public abstract class Servicio implements Facturable, Desactivable {
      * @param cantidad platillos, sesiones o prendas, según la categoría; positiva
      * @return costo total en pesos
      */
-    // POLIMORFISMO: cada subclase sobreescribe este método con su propia regla (RN-19 a RN-21)
+    // POLIMORFISMO: cada subclase sobrescribe este método con su propia regla (RN-19 a RN-21)
     @Override
     public abstract double calcularCosto(int cantidad);
 

@@ -1,7 +1,7 @@
 package modelo.catalogo;
 
 /** Servicio de restaurante: cobra el precio base por cada platillo. */
-// HERENCIA: ServicioRestaurante extiende de Servicio
+// HERENCIA: ServicioRestaurante hereda de Servicio
 public class ServicioRestaurante extends Servicio {
 
     /**
@@ -16,7 +16,7 @@ public class ServicioRestaurante extends Servicio {
     }
 
     /** {@inheritDoc} Fórmula: {@code precioBase × platillos} (RN-19). */
-    // POLIMORFISMO: sobreescritura de calcularCosto()
+    // POLIMORFISMO: sobrescritura de calcularCosto()
     @Override
     public double calcularCosto(int platillos) {
         validarCantidad(platillos);

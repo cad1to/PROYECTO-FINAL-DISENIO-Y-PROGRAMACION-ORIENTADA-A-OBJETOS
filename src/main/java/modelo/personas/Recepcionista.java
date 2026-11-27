@@ -42,7 +42,7 @@ public class Recepcionista extends Empleado {
      *
      * @param r reservación a la que se hace check-in
      * @throws HotelException si el recepcionista está inactivo o la reservación es nula;
-     *                        o la subclase que lance la reservación al validar su estado
+     *                        también la excepción que lance la reservación al validar su estado
      */
     public void hacerCheckIn(Reservacion r) throws HotelException {
         if (!activo) {
@@ -61,7 +61,7 @@ public class Recepcionista extends Empleado {
      *
      * @param r reservación a la que se hace check-out
      * @throws HotelException si el recepcionista está inactivo o la reservación es nula;
-     *                        o la subclase que lance la reservación al validar su estado
+     *                        también la excepción que lance la reservación al validar su estado
      *                        o el pago
      */
     public void hacerCheckOut(Reservacion r) throws HotelException {

@@ -46,7 +46,7 @@ public abstract class Habitacion implements Facturable, Desactivable {
      * @param noches número de noches, positivo
      * @return costo total del hospedaje en pesos
      */
-    // POLIMORFISMO: cada subclase sobreescribe este método con su propia fórmula (RN-16 a RN-18)
+    // POLIMORFISMO: cada subclase sobrescribe este método con su propia fórmula (RN-16 a RN-18)
     public abstract double calcularTarifa(int noches);
 
     /**

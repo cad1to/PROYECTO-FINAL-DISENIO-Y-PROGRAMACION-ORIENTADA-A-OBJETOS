@@ -1,7 +1,7 @@
 package modelo.catalogo;
 
 /** Servicio de lavandería: cobra por prenda y aplica un recargo si es exprés. */
-// HERENCIA: ServicioLavanderia extiende de Servicio
+// HERENCIA: ServicioLavanderia hereda de Servicio
 public class ServicioLavanderia extends Servicio {
     // CONSTANTE: recargo porcentual del servicio exprés (RN-21)
     public static final double RECARGO_EXPRES = 0.25;
@@ -25,7 +25,7 @@ public class ServicioLavanderia extends Servicio {
      * {@inheritDoc} Fórmula: {@code precioBase × prendas}; si es exprés, ese
      * monto se multiplica por {@code (1 + RECARGO_EXPRES)} (RN-21).
      */
-    // POLIMORFISMO: sobreescritura de calcularCosto(), con recargo si es exprés
+    // POLIMORFISMO: sobrescritura de calcularCosto(), con recargo si es exprés
     @Override
     public double calcularCosto(int prendas) {
         validarCantidad(prendas);
